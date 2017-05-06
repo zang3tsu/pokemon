@@ -18,6 +18,9 @@ all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
                     'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO',
                     'DRA', 'DAR', 'STE', 'FAI']
 team_size = 4
+trade_evol = True
+mega_evol = False
+has_false_swipe = True
 
 
 def read_single_type_chart():
@@ -157,30 +160,29 @@ def get_strong_against_score(all_types, all_type_chart, strong_weak_combos,
 
 
 def pcnt(x):
-    return float('%.2f' % (x * 100))
+    return float('%.2f' % x)
 
 
 def get_team_score(all_types, all_type_chart, strong_weak_combos, roster, team):
 
     # Get normalized base stats geometric mean
-    base_stats_gmean = get_base_stats_gmean(roster, team)
+    base_stats_gmean = pcnt(get_base_stats_gmean(roster, team) * 100)
 
     # Get weak against score
-    weak_score = get_weak_against_score(
-        all_types, all_type_chart, strong_weak_combos, roster, team)
+    weak_score = pcnt(get_weak_against_score(
+        all_types, all_type_chart, strong_weak_combos, roster, team) * 100)
 
     # Get strong against score
-    strong_score = get_strong_against_score(
-        all_types, all_type_chart, strong_weak_combos, roster, team)
+    strong_score = pcnt(get_strong_against_score(
+        all_types, all_type_chart, strong_weak_combos, roster, team) * 100)
 
     # Get geometric mean of all scores
-    team_score = math.pow(math.pow(base_stats_gmean, 1)
-                          * math.pow(strong_score, 1)
-                          * math.pow(weak_score, 1),
-                          1 / 3)
+    team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
+                               * math.pow(strong_score, 1)
+                               * math.pow(weak_score, 1),
+                               1 / 3))
 
-    return (pcnt(team_score), pcnt(base_stats_gmean),
-            pcnt(weak_score), pcnt(strong_score))
+    return team_score, base_stats_gmean, weak_score, strong_score
 
 
 def generate_dual_type_chart(single_type_chart):
@@ -205,15 +207,44 @@ def generate_dual_type_chart(single_type_chart):
     return all_types, all_type_chart
 
 
+def check_if_has_false_swipe(roster, team):
+    for pk in team:
+        if pk in roster['team']:
+            if ('has_false_swipe' in roster['team'][pk]
+                    and roster['team'][pk]['has_false_swipe']):
+                return True
+        elif pk in roster['all']:
+            if ('has_false_swipe' in roster['all'][pk]
+                    and roster['all'][pk]['has_false_swipe']):
+                return True
+        else:
+            print(pk, 'not in either team/all list! Exiting.')
+            exit(1)
+    # No false swipe in team
+    return False
+
+
 def main():
 
     start_time = datetime.now()
 
-    # Read type chart
-    single_type_chart = read_single_type_chart()
+    print('team_size:', team_size)
+    print('trade_evol:', trade_evol)
+    print('mega_evol:', mega_evol)
+    print('has_false_swipe:', has_false_swipe)
 
-    # Generate dual type chart
-    all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
+    if os.path.isfile('dual_type_chart.dat'):
+        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
+                                                     'rb'))
+    else:
+        # Read type chart
+        single_type_chart = read_single_type_chart()
+
+        # Generate dual type chart
+        all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
+
+        pickle.dump((all_types, all_type_chart),
+                    open('dual_type_chart.dat', 'wb'))
 
     # Read pokemon roster
     roster = json.load(open('pk_list.json', 'r'))
@@ -226,12 +257,6 @@ def main():
         strong_weak_combos = pickle.load(open('strong_weak_combos.dat', 'rb'))
     else:
         strong_weak_combos = {}
-
-    print('team_size:', team_size)
-    trade_evol = True
-    print('trade_evol:', trade_evol)
-    mega_evol = False
-    print('mega_evol:', mega_evol)
 
     # Get pokemon list
     pk_list = []
@@ -248,12 +273,15 @@ def main():
     for comb in itertools.combinations(pk_list,
                                        team_size - len(roster['team'])):
         team = tuple(sorted(comb + tuple(roster['team'].keys())))
-        # Get team score
-        team_score, base_stats_gmean, weak_score, strong_score = get_team_score(
-            all_types, all_type_chart, strong_weak_combos, roster, team)
-        # Add to list
-        teams.append((team_score, base_stats_gmean,
-                      strong_score, weak_score, team))
+        if ((has_false_swipe and check_if_has_false_swipe(roster, team))
+                or not has_false_swipe):
+            # Get team score
+            results = get_team_score(
+                all_types, all_type_chart, strong_weak_combos, roster, team)
+            team_score, base_stats_gmean, weak_score, strong_score = results
+            # Add to list
+            teams.append((team_score, base_stats_gmean,
+                          strong_score, weak_score, team))
 
     # Sort teams and print top 10
     pprint(sorted(teams, reverse=True)[:10], width=120)

@@ -11,7 +11,8 @@
     },
     "Alolan Marowak": {
       "base_stats": 425,
-      "type": "FIR/GHO"
+      "type": "FIR/GHO",
+      "has_false_swipe": true
     },
     "Alolan Muk": {
       "base_stats": 500,
@@ -91,7 +92,8 @@
     },
     "Decidueye": {
       "base_stats": 530,
-      "type": "GRA/GHO"
+      "type": "GRA/GHO",
+      "has_false_swipe": true
     },
     "Drifblim": {
       "base_stats": 498,
@@ -103,7 +105,8 @@
     },
     "Fearow": {
       "base_stats": 442,
-      "type": "NOR/FLY"
+      "type": "NOR/FLY",
+      "has_false_swipe": true
     },
     "Feraligatr": {
       "base_stats": 530,
@@ -133,7 +136,8 @@
     },
     "Golisopod": {
       "base_stats": 530,
-      "type": "BUG/WAT"
+      "type": "BUG/WAT",
+      "has_false_swipe": true
     },
     "Goodra": {
       "base_stats": 600,
@@ -205,7 +209,8 @@
     },
     "Lurantis": {
       "base_stats": 480,
-      "type": "GRA"
+      "type": "GRA",
+      "has_false_swipe": true
     },
     "Lycanroc": {
       "base_stats": 487,
@@ -239,7 +244,8 @@
     },
     "Marowak": {
       "base_stats": 425,
-      "type": "GRO"
+      "type": "GRO",
+      "has_false_swipe": true
     },
     "Masquerain": {
       "base_stats": 454,
@@ -268,7 +274,8 @@
     "Mega Pinsir": {
       "base_stats": 600,
       "mega_evol": true,
-      "type": "BUG/FLY"
+      "type": "BUG/FLY",
+      "has_false_swipe": true
     },
     "Mega Sableye": {
       "base_stats": 480,
@@ -335,7 +342,8 @@
     },
     "Parasect": {
       "base_stats": 405,
-      "type": "BUG/GRA"
+      "type": "BUG/GRA",
+      "has_false_swipe": true
     },
     "Passimian": {
       "base_stats": 490,
@@ -347,7 +355,8 @@
     },
     "Pinsir": {
       "base_stats": 500,
-      "type": "BUG"
+      "type": "BUG",
+      "has_false_swipe": true
     },
     "Politoed": {
       "base_stats": 500,
