@@ -4,13 +4,15 @@ import copy
 import itertools
 import json
 import math
+import multiprocessing
 import numpy
 import os
-import statistics
 import pickle
+import shelve
+import statistics
 
 from pprint import pprint
-from datetime import datetime
+from datetime import datetime, timedelta
 
 numpy.set_printoptions(linewidth=160)
 
@@ -21,6 +23,7 @@ team_size = 4
 trade_evol = True
 mega_evol = False
 has_false_swipe = True
+teams_size = 20
 
 
 def read_single_type_chart():
@@ -103,10 +106,11 @@ def get_types(roster, pk):
 
 def get_weak_against_score(all_types, all_type_chart, strong_weak_combos,
                            roster, team):
+    team_key = ','.join(team)
     # Get weaknesses
-    if (team in strong_weak_combos
-            and 'weak_coverage' in strong_weak_combos[team]):
-        coverage = strong_weak_combos[team]['weak_coverage']
+    if (team_key in strong_weak_combos
+            and 'weak_coverage' in strong_weak_combos[team_key]):
+        coverage = strong_weak_combos[team_key]['weak_coverage']
     else:
         weak_combo = None
         for pk in team:
@@ -123,20 +127,20 @@ def get_weak_against_score(all_types, all_type_chart, strong_weak_combos,
         mean = statistics.mean([numpy.nanmax(product), numpy.nanmin(product)])
         coverage = 1 / mean
 
-        if team not in strong_weak_combos:
-            strong_weak_combos[team] = {}
-        strong_weak_combos[team]['weak_coverage'] = coverage
+        if team_key not in strong_weak_combos:
+            strong_weak_combos[team_key] = {}
+        strong_weak_combos[team_key]['weak_coverage'] = coverage
 
     return coverage
 
 
 def get_strong_against_score(all_types, all_type_chart, strong_weak_combos,
                              roster, team):
-
+    team_key = ','.join(team)
     # Get strengths
-    if (team in strong_weak_combos
-            and 'strong_coverage' in strong_weak_combos[team]):
-        coverage = strong_weak_combos[team]['strong_coverage']
+    if (team_key in strong_weak_combos
+            and 'strong_coverage' in strong_weak_combos[team_key]):
+        coverage = strong_weak_combos[team_key]['strong_coverage']
     else:
         strong_combo = None
         for pk in team:
@@ -152,9 +156,9 @@ def get_strong_against_score(all_types, all_type_chart, strong_weak_combos,
         counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
         coverage = counter / len(all_types)
 
-        if team not in strong_weak_combos:
-            strong_weak_combos[team] = {}
-        strong_weak_combos[team]['strong_coverage'] = coverage
+        if team_key not in strong_weak_combos:
+            strong_weak_combos[team_key] = {}
+        strong_weak_combos[team_key]['strong_coverage'] = coverage
 
     return coverage
 
@@ -178,9 +182,9 @@ def get_team_score(all_types, all_type_chart, strong_weak_combos, roster, team):
 
     # Get geometric mean of all scores
     team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
-                               * math.pow(strong_score, 1)
+                               * math.pow(strong_score, 3)
                                * math.pow(weak_score, 1),
-                               1 / 3))
+                               1 / 5))
 
     return team_score, base_stats_gmean, weak_score, strong_score
 
@@ -224,15 +228,59 @@ def check_if_has_false_swipe(roster, team):
     return False
 
 
-def main():
+def comb_worker(comb, roster, all_types, all_type_chart, strong_weak_combos,
+                teams):
+    team = tuple(sorted(comb + tuple(roster['team'].keys())))
+    if ((has_false_swipe and check_if_has_false_swipe(roster, team))
+            or not has_false_swipe):
+        # Get team score
+        results = get_team_score(
+            all_types, all_type_chart, strong_weak_combos, roster, team)
+        team_score, base_stats_gmean, weak_score, strong_score = results
+        # Add to list
+        # teams.append((team_score, base_stats_gmean,
+        #               strong_score, weak_score, team))
+        teams = append_sorted(teams,
+                              (team_score, base_stats_gmean,
+                               strong_score, weak_score,
+                               team))
+        # print('#' * 40)
+        # print('teams:')
+        # print(teams)
+        # Trim list
+        # if len(teams) > teams_size:
+        #     teams = sorted(teams, reverse=True)[:20]
+    return teams
 
-    start_time = datetime.now()
+
+def append_sorted(aList, a):
+    if not aList:
+        aList = [a]
+    else:
+        did_break = False
+        for i in range(len(aList)):
+            if a > aList[i]:
+                did_break = True
+                break
+        if did_break:
+            aList.insert(i, a)
+        else:
+            aList.append(a)
+        if len(aList) > teams_size:
+            # aList = aList[:teams_size]
+            aList.pop()
+    return aList
+
+
+def main():
 
     print('team_size:', team_size)
     print('trade_evol:', trade_evol)
     print('mega_evol:', mega_evol)
     print('has_false_swipe:', has_false_swipe)
+    print('teams_size:', teams_size)
 
+    print('loading dual type chart...')
     if os.path.isfile('dual_type_chart.dat'):
         all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
                                                      'rb'))
@@ -247,18 +295,16 @@ def main():
                     open('dual_type_chart.dat', 'wb'))
 
     # Read pokemon roster
+    print('reading pokemon roster...')
     roster = json.load(open('pk_list.json', 'r'))
 
     # Normalize base stats
+    print('normalizing base stats...')
     normalize_base_stats(roster)
-
-    # Load strong_weak_combos
-    if os.path.isfile('strong_weak_combos.dat'):
-        strong_weak_combos = pickle.load(open('strong_weak_combos.dat', 'rb'))
-    else:
-        strong_weak_combos = {}
+    print('roster size:', len(roster['all']))
 
     # Get pokemon list
+    print('getting pokemon list...')
     pk_list = []
     for pk, pk_info in roster['all'].items():
         if trade_evol and 'trade_evol' in pk_info and pk_info['trade_evol']:
@@ -268,28 +314,48 @@ def main():
         elif 'trade_evol' not in pk_info and 'mega_evol' not in pk_info:
             pk_list.append(pk)
 
+    # Load strong_weak_combos
+    print('loading strong_weak_combos...')
+    start_time = datetime.now()
+    if os.path.isfile('strong_weak_combos.dat'):
+        strong_weak_combos = pickle.load(open('strong_weak_combos.dat', 'rb'))
+    else:
+        strong_weak_combos = {}
+    print('duration:', datetime.now() - start_time)
+
     # Get all team combinations
+    # with shelve.open('strong_weak_combos.db', writeback=True) as
+    # strong_weak_combos:
+    print('getting all team combinations...')
+    save_time = start_time = datetime.now()
     teams = []
     for comb in itertools.combinations(pk_list,
                                        team_size - len(roster['team'])):
-        team = tuple(sorted(comb + tuple(roster['team'].keys())))
-        if ((has_false_swipe and check_if_has_false_swipe(roster, team))
-                or not has_false_swipe):
-            # Get team score
-            results = get_team_score(
-                all_types, all_type_chart, strong_weak_combos, roster, team)
-            team_score, base_stats_gmean, weak_score, strong_score = results
-            # Add to list
-            teams.append((team_score, base_stats_gmean,
-                          strong_score, weak_score, team))
-
-    # Sort teams and print top 10
-    pprint(sorted(teams, reverse=True)[:10], width=120)
-
-    # Save strong_weak_combos
-    pickle.dump(strong_weak_combos, open('strong_weak_combos.dat', 'wb'))
+        teams = comb_worker(comb, roster, all_types, all_type_chart,
+                            strong_weak_combos, teams)
+        # counter += 1
+        # if counter > 5:
+        #     break
+        if datetime.now() - save_time > timedelta(minutes=10):
+            print('saving strong_weak_combos...')
+            pickle.dump(strong_weak_combos,
+                        open('strong_weak_combos.dat', 'wb'))
+            # strong_weak_combos.sync()
+            save_time = datetime.now()
 
     print('duration:', datetime.now() - start_time)
+
+    # Print teams
+    pprint(teams, width=120)
+    # pprint(sorted(teams, reverse=True)[:20], width=120)
+
+    # Save strong_weak_combos
+    print('saving strong_weak_combos...')
+    start_time = datetime.now()
+    pickle.dump(strong_weak_combos,
+                open('strong_weak_combos.dat', 'wb'))
+    print('duration:', datetime.now() - start_time)
+
 
 if __name__ == '__main__':
     main()

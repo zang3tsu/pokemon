@@ -1,5 +1,10 @@
 {
   "all": {
+    "Aegislash": {
+      "base_stats": 520,
+      "has_false_swipe": true,
+      "type": "STE/GHO"
+    },
     "Alakazam": {
       "base_stats": 500,
       "trade_evol": true,
@@ -11,8 +16,8 @@
     },
     "Alolan Marowak": {
       "base_stats": 425,
-      "type": "FIR/GHO",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "FIR/GHO"
     },
     "Alolan Muk": {
       "base_stats": 500,
@@ -42,9 +47,21 @@
       "base_stats": 555,
       "type": "FIR"
     },
+    "Archeops": {
+      "base_stats": 567,
+      "type": "ROC/FLY"
+    },
     "Ariados": {
       "base_stats": 400,
       "type": "BUG/POI"
+    },
+    "Azumarill": {
+      "base_stats": 420,
+      "type": "WAT/FAI"
+    },
+    "Bastiodon": {
+      "base_stats": 495,
+      "type": "ROC/STE"
     },
     "Bewear": {
       "base_stats": 500,
@@ -70,6 +87,10 @@
       "base_stats": 500,
       "type": "ROC/FAI"
     },
+    "Carracosta": {
+      "base_stats": 495,
+      "type": "WAT/ROC"
+    },
     "Castform": {
       "base_stats": 420,
       "type": "NOR"
@@ -92,8 +113,8 @@
     },
     "Decidueye": {
       "base_stats": 530,
-      "type": "GRA/GHO",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "GRA/GHO"
     },
     "Drifblim": {
       "base_stats": 498,
@@ -105,8 +126,8 @@
     },
     "Fearow": {
       "base_stats": 442,
-      "type": "NOR/FLY",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "NOR/FLY"
     },
     "Feraligatr": {
       "base_stats": 530,
@@ -136,8 +157,8 @@
     },
     "Golisopod": {
       "base_stats": 530,
-      "type": "BUG/WAT",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "BUG/WAT"
     },
     "Goodra": {
       "base_stats": 600,
@@ -209,8 +230,12 @@
     },
     "Lurantis": {
       "base_stats": 480,
-      "type": "GRA",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "GRA"
+    },
+    "Luxray": {
+      "base_stats": 523,
+      "type": "ELE"
     },
     "Lycanroc": {
       "base_stats": 487,
@@ -244,8 +269,8 @@
     },
     "Marowak": {
       "base_stats": 425,
-      "type": "GRO",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "GRO"
     },
     "Masquerain": {
       "base_stats": 454,
@@ -273,9 +298,9 @@
     },
     "Mega Pinsir": {
       "base_stats": 600,
+      "has_false_swipe": true,
       "mega_evol": true,
-      "type": "BUG/FLY",
-      "has_false_swipe": true
+      "type": "BUG/FLY"
     },
     "Mega Sableye": {
       "base_stats": 480,
@@ -342,8 +367,8 @@
     },
     "Parasect": {
       "base_stats": 405,
-      "type": "BUG/GRA",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "BUG/GRA"
     },
     "Passimian": {
       "base_stats": 490,
@@ -355,8 +380,8 @@
     },
     "Pinsir": {
       "base_stats": 500,
-      "type": "BUG",
-      "has_false_swipe": true
+      "has_false_swipe": true,
+      "type": "BUG"
     },
     "Politoed": {
       "base_stats": 500,
@@ -378,6 +403,10 @@
       "base_stats": 410,
       "type": "WAT"
     },
+    "Rampardos": {
+      "base_stats": 495,
+      "type": "ROC"
+    },
     "Ribombee": {
       "base_stats": 464,
       "type": "BUG/FAI"
@@ -393,6 +422,10 @@
     "Salazzle": {
       "base_stats": 480,
       "type": "POI/FIR"
+    },
+    "Scolipede": {
+      "base_stats": 485,
+      "type": "BUG/POI"
     },
     "Seaking": {
       "base_stats": 450,
@@ -483,9 +516,17 @@
       "base_stats": 525,
       "type": "WAT"
     },
+    "Victreebel": {
+      "base_stats": 490,
+      "type": "GRA/POI"
+    },
     "Vikavolt": {
       "base_stats": 500,
       "type": "BUG/ELE"
+    },
+    "Walrein": {
+      "base_stats": 530,
+      "type": "ICE/WAT"
     },
     "Whimsicott": {
       "base_stats": 480,
