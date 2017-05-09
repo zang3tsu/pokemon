@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import copy
 import itertools
 import json
 import math
@@ -8,17 +7,10 @@ import multiprocessing
 import numpy
 import os
 import pickle
-import shelve
 import statistics
-import sqlitedict
-import lzma
-import sqlite3
-import pymongo
-import hashlib
 
 from pprint import pprint
 from datetime import datetime, timedelta
-from bson.objectid import ObjectId
 
 numpy.set_printoptions(linewidth=160)
 
@@ -28,8 +20,9 @@ all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
+worker_count = multiprocessing.cpu_count()
 
 
 def read_single_type_chart():
@@ -38,7 +31,6 @@ def read_single_type_chart():
     # Read type_chart.csv
     single_type_chart_ls = []
     with open('single_type_chart.csv', 'r') as open_file:
-        hdr = True
         single_type_chart_ls = []
         for l in open_file:
             r = [float(x) for x in l.strip().split(',')]
@@ -110,15 +102,13 @@ def get_types(roster, pk):
     return types
 
 
-def get_weak_against_score(all_types, all_type_chart, strong_weak_combos,
-                           roster, team):
-
-    team_key = ','.join(team).replace(' ', '')
+def get_weak_against_score(all_types, all_type_chart, combo_results,
+                           roster, team, team_key):
 
     # Get weaknesses
-    if (team_key in strong_weak_combos
-            and 'weak_coverage' in strong_weak_combos[team_key]):
-        coverage = strong_weak_combos[team_key]['weak_coverage']
+    if (team_key in combo_results
+            and 'weak_coverage' in combo_results[team_key]):
+        coverage = combo_results[team_key]['weak_coverage']
     else:
         weak_combo = None
         for pk in team:
@@ -135,22 +125,16 @@ def get_weak_against_score(all_types, all_type_chart, strong_weak_combos,
         mean = statistics.mean([numpy.nanmax(product), numpy.nanmin(product)])
         coverage = 1 / mean
 
-        if team_key not in strong_weak_combos:
-            strong_weak_combos[team_key] = {}
-        strong_weak_combos[team_key]['weak_coverage'] = coverage
-
     return coverage
 
 
-def get_strong_against_score(all_types, all_type_chart, strong_weak_combos,
-                             roster, team):
-
-    team_key = ','.join(team).replace(' ', '')
+def get_strong_against_score(all_types, all_type_chart, combo_results,
+                             roster, team, team_key):
 
     # Get strengths
-    if (team_key in strong_weak_combos
-            and 'strong_coverage' in strong_weak_combos[team_key]):
-        coverage = strong_weak_combos[team_key]['strong_coverage']
+    if (team_key in combo_results
+            and 'strong_coverage' in combo_results[team_key]):
+        coverage = combo_results[team_key]['strong_coverage']
     else:
         strong_combo = None
         for pk in team:
@@ -166,10 +150,6 @@ def get_strong_against_score(all_types, all_type_chart, strong_weak_combos,
         counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
         coverage = counter / len(all_types)
 
-        if team_key not in strong_weak_combos:
-            strong_weak_combos[team_key] = {}
-        strong_weak_combos[team_key]['strong_coverage'] = coverage
-
     return coverage
 
 
@@ -177,18 +157,23 @@ def pcnt(x):
     return float('%.2f' % x)
 
 
-def get_team_score(all_types, all_type_chart, strong_weak_combos, roster, team):
+def get_team_score(all_types, all_type_chart, combo_results, roster,
+                   team, combo_results_q):
+
+    team_key = ','.join(team).replace(' ', '')
 
     # Get normalized base stats geometric mean
     base_stats_gmean = pcnt(get_base_stats_gmean(roster, team) * 100)
 
     # Get weak against score
     weak_score = pcnt(get_weak_against_score(
-        all_types, all_type_chart, strong_weak_combos, roster, team) * 100)
+        all_types, all_type_chart, combo_results, roster, team,
+        team_key) * 100)
 
     # Get strong against score
     strong_score = pcnt(get_strong_against_score(
-        all_types, all_type_chart, strong_weak_combos, roster, team) * 100)
+        all_types, all_type_chart, combo_results, roster, team,
+        team_key) * 100)
 
     # Get geometric mean of all scores
     team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
@@ -196,7 +181,8 @@ def get_team_score(all_types, all_type_chart, strong_weak_combos, roster, team):
                                * math.pow(weak_score, 1),
                                1 / 5))
 
-    return team_score, base_stats_gmean, weak_score, strong_score
+    combo_results_q.put((team_key, team_score, base_stats_gmean, strong_score,
+                         weak_score))
 
 
 def generate_dual_type_chart(single_type_chart):
@@ -238,51 +224,24 @@ def check_if_has_false_swipe(roster, team):
     return False
 
 
-def get_hash(s):
-    h = hashlib.sha1(s.encode('utf-8')).hexdigest()
-    dir_path = os.path.join(h[0:2], h[2:4], h[4:6], h[6:8], h[8:10], h[10:12])
-    file_path = os.path.join(dir_path, h[12:])
-    return h, dir_path, file_path
+def comb_worker(comb_q, roster, all_types, all_type_chart, combo_results,
+                combo_results_q):
 
+    comb = comb_q.get()
+    while comb != 'stop':
 
-def comb_worker(comb):
+        team = tuple(sorted(comb + tuple(roster['team'].keys())))
 
-    global roster, all_types, all_type_chart, teams, strong_weak_combos
-    global has_false_swipe
+        if ((has_false_swipe and check_if_has_false_swipe(roster, team))
+                or not has_false_swipe):
+            # Get team score
+            # print('team:', team)
+            get_team_score(all_types, all_type_chart, combo_results,
+                           roster, team, combo_results_q)
 
-    team = tuple(sorted(comb + tuple(roster['team'].keys())))
+        comb = comb_q.get()
 
-    if ((has_false_swipe and check_if_has_false_swipe(roster, team))
-            or not has_false_swipe):
-        # Get team score
-        results = get_team_score(
-            all_types, all_type_chart, strong_weak_combos, roster, team)
-        team_score, base_stats_gmean, weak_score, strong_score = results
-        # Add to list
-        teams = append_sorted(teams,
-                              (team_score, base_stats_gmean,
-                               strong_score, weak_score,
-                               team))
-
-    # return teams
-
-
-def append_sorted(aList, a):
-    if not aList:
-        aList = [a]
-    else:
-        did_break = False
-        for i in range(len(aList)):
-            if a > aList[i]:
-                did_break = True
-                break
-        if did_break:
-            aList.insert(i, a)
-        else:
-            aList.append(a)
-        if len(aList) > teams_size:
-            aList.pop()
-    return aList
+    combo_results_q.put('done')
 
 
 def main():
@@ -292,6 +251,7 @@ def main():
     print('mega_evol:', mega_evol)
     print('has_false_swipe:', has_false_swipe)
     print('teams_size:', teams_size)
+    print('worker_count:', worker_count)
 
     print('loading dual type chart...')
     if os.path.isfile('dual_type_chart.dat'):
@@ -327,43 +287,84 @@ def main():
             pk_list.append(pk)
     print('pk_list size:', len(pk_list))
 
-    # Load strong_weak_combos
-    print('loading strong_weak_combos...')
+    # Load combo_results
+    print('loading combo_results...')
     start_time = datetime.now()
-    python_dict = 'strong_weak_combos.pdict'
+    python_dict = 'combo_results.pdict'
     if os.path.isfile(python_dict):
-        strong_weak_combos = pickle.load(open(python_dict, 'rb'))
+        combo_results = pickle.load(open(python_dict, 'rb'))
+        print('loaded:', len(combo_results))
     else:
-        strong_weak_combos = {}
+        combo_results = {}
     print('duration:', datetime.now() - start_time)
 
-    # Initialize multiprocessing
-    manager = multiprocessing.Manager()
-    strong_weak_combos = manager.dict(strong_weak_combos)
-    teams = manager.list()
-    pool = multiprocessing.Pool()
-    # print(strong_weak_combos.items()[0])
-    # exit(1)
+    # Initialize workers
+    print('initialize workers...')
+    combo_results_q = multiprocessing.Queue()
+    comb_q = multiprocessing.Queue()
+    workers = []
+    for i in range(worker_count):
+        p = multiprocessing.Process(target=comb_worker,
+                                    args=(comb_q, roster, all_types,
+                                          all_type_chart, combo_results,
+                                          combo_results_q))
+        p.start()
+        workers.append(p)
 
     # Get all team combinations
     print('getting all team combinations...')
     start_time = datetime.now()
-    global roster, all_types, all_type_chart, teams, strong_weak_combos
-    global has_false_swipe
-    res = pool.map_async(comb_worker,
-                         itertools.combinations(pk_list,
-                                                team_size -
-                                                len(roster['team'])))
-    res.wait()
+    # counter = 0
+    for comb in itertools.combinations(pk_list,
+                                       team_size -
+                                       len(roster['team'])):
+        comb_q.put(comb)
+        # counter += 1
+        # if counter >= 1000000:
+        #     break
+    # print('counter:', counter)
+    # Send terminate code
+    for w in workers:
+        comb_q.put('stop')
+
+    # Consume combo results queue
+    print('consuming combo results queue...')
+    done_counter = 0
+    while True:
+        combo_result = combo_results_q.get()
+        if combo_result == 'done':
+            done_counter += 1
+            if done_counter >= worker_count:
+                break
+        else:
+            (team_key, team_score, base_stats_gmean, strong_score,
+                weak_score) = combo_result
+            if team_key not in combo_results:
+                combo_results[team_key] = {}
+            combo_results[team_key]['team_score'] = team_score
+            combo_results[team_key]['base_stats_gmean'] = base_stats_gmean
+            combo_results[team_key]['strong_score'] = strong_score
+            combo_results[team_key]['weak_score'] = weak_score
+
+    # Check if workers have stopped
+    print('checking if workers have stopped...')
+    for p in workers:
+        p.join()
     print('duration:', datetime.now() - start_time)
 
     # Print teams
-    pprint(teams, width=120)
+    print('#' * 40)
+    print('team_score,base_stats_gmean,strong_score,weak_score,team')
+    for k, v in sorted(combo_results.items(), reverse=True,
+                       key=lambda x: x[1]['team_score'])[:20]:
+        print(','.join([v['team_score'], v['base_stats_gmean'],
+                        v['strong_score'], v['weak_score'], k]))
+    print('#' * 40)
 
-    # Save strong_weak_combos
-    print('saving strong_weak_combos...')
+    # Save combo_results
+    print('saving combo_results...')
     start_time = datetime.now()
-    pickle.dump(strong_weak_combos._getvalue(), open(python_dict, 'wb'))
+    pickle.dump(combo_results, open(python_dict, 'wb'))
     print('duration:', datetime.now() - start_time)
 
 
