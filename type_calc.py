@@ -28,7 +28,7 @@ all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 
 
