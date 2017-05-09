@@ -10,9 +10,15 @@ import os
 import pickle
 import shelve
 import statistics
+import sqlitedict
+import lzma
+import sqlite3
+import pymongo
+import hashlib
 
 from pprint import pprint
 from datetime import datetime, timedelta
+from bson.objectid import ObjectId
 
 numpy.set_printoptions(linewidth=160)
 
@@ -106,7 +112,9 @@ def get_types(roster, pk):
 
 def get_weak_against_score(all_types, all_type_chart, strong_weak_combos,
                            roster, team):
-    team_key = ','.join(team)
+
+    team_key = ','.join(team).replace(' ', '')
+
     # Get weaknesses
     if (team_key in strong_weak_combos
             and 'weak_coverage' in strong_weak_combos[team_key]):
@@ -136,7 +144,9 @@ def get_weak_against_score(all_types, all_type_chart, strong_weak_combos,
 
 def get_strong_against_score(all_types, all_type_chart, strong_weak_combos,
                              roster, team):
-    team_key = ','.join(team)
+
+    team_key = ','.join(team).replace(' ', '')
+
     # Get strengths
     if (team_key in strong_weak_combos
             and 'strong_coverage' in strong_weak_combos[team_key]):
@@ -228,9 +238,18 @@ def check_if_has_false_swipe(roster, team):
     return False
 
 
-def comb_worker(comb, roster, all_types, all_type_chart, strong_weak_combos,
-                teams):
+def get_hash(s):
+    h = hashlib.sha1(s.encode('utf-8')).hexdigest()
+    dir_path = os.path.join(h[0:2], h[2:4], h[4:6], h[6:8], h[8:10], h[10:12])
+    file_path = os.path.join(dir_path, h[12:])
+    return h, dir_path, file_path
+
+
+def comb_worker(comb, roster, all_types, all_type_chart, teams,
+                strong_weak_combos):
+
     team = tuple(sorted(comb + tuple(roster['team'].keys())))
+
     if ((has_false_swipe and check_if_has_false_swipe(roster, team))
             or not has_false_swipe):
         # Get team score
@@ -238,18 +257,11 @@ def comb_worker(comb, roster, all_types, all_type_chart, strong_weak_combos,
             all_types, all_type_chart, strong_weak_combos, roster, team)
         team_score, base_stats_gmean, weak_score, strong_score = results
         # Add to list
-        # teams.append((team_score, base_stats_gmean,
-        #               strong_score, weak_score, team))
         teams = append_sorted(teams,
                               (team_score, base_stats_gmean,
                                strong_score, weak_score,
                                team))
-        # print('#' * 40)
-        # print('teams:')
-        # print(teams)
-        # Trim list
-        # if len(teams) > teams_size:
-        #     teams = sorted(teams, reverse=True)[:20]
+
     return teams
 
 
@@ -267,7 +279,6 @@ def append_sorted(aList, a):
         else:
             aList.append(a)
         if len(aList) > teams_size:
-            # aList = aList[:teams_size]
             aList.pop()
     return aList
 
@@ -301,7 +312,6 @@ def main():
     # Normalize base stats
     print('normalizing base stats...')
     normalize_base_stats(roster)
-    print('roster size:', len(roster['all']))
 
     # Get pokemon list
     print('getting pokemon list...')
@@ -313,47 +323,47 @@ def main():
             pk_list.append(pk)
         elif 'trade_evol' not in pk_info and 'mega_evol' not in pk_info:
             pk_list.append(pk)
+    print('pk_list size:', len(pk_list))
 
     # Load strong_weak_combos
     print('loading strong_weak_combos...')
     start_time = datetime.now()
-    if os.path.isfile('strong_weak_combos.dat'):
-        strong_weak_combos = pickle.load(open('strong_weak_combos.dat', 'rb'))
+    python_dict = 'strong_weak_combos.pdict'
+    if os.path.isfile(python_dict):
+        strong_weak_combos = pickle.load(open(python_dict, 'rb'))
     else:
         strong_weak_combos = {}
     print('duration:', datetime.now() - start_time)
 
     # Get all team combinations
-    # with shelve.open('strong_weak_combos.db', writeback=True) as
-    # strong_weak_combos:
     print('getting all team combinations...')
     save_time = start_time = datetime.now()
     teams = []
+    counter = 0
     for comb in itertools.combinations(pk_list,
                                        team_size - len(roster['team'])):
-        teams = comb_worker(comb, roster, all_types, all_type_chart,
-                            strong_weak_combos, teams)
-        # counter += 1
-        # if counter > 5:
-        #     break
+        if (counter % 100000 == 0):
+            print(str(counter) + '...')
+
+        teams = comb_worker(comb, roster, all_types, all_type_chart, teams,
+                            strong_weak_combos)
+
+        counter += 1
         if datetime.now() - save_time > timedelta(minutes=10):
             print('saving strong_weak_combos...')
-            pickle.dump(strong_weak_combos,
-                        open('strong_weak_combos.dat', 'wb'))
-            # strong_weak_combos.sync()
+            pickle.dump(strong_weak_combos, open(python_dict, 'wb'))
             save_time = datetime.now()
 
+    print('total:', counter)
     print('duration:', datetime.now() - start_time)
 
     # Print teams
     pprint(teams, width=120)
-    # pprint(sorted(teams, reverse=True)[:20], width=120)
 
     # Save strong_weak_combos
     print('saving strong_weak_combos...')
     start_time = datetime.now()
-    pickle.dump(strong_weak_combos,
-                open('strong_weak_combos.dat', 'wb'))
+    pickle.dump(strong_weak_combos, open(python_dict, 'wb'))
     print('duration:', datetime.now() - start_time)
 
 
