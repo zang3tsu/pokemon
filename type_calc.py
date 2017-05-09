@@ -245,8 +245,10 @@ def get_hash(s):
     return h, dir_path, file_path
 
 
-def comb_worker(comb, roster, all_types, all_type_chart, teams,
-                strong_weak_combos):
+def comb_worker(comb):
+
+    global roster, all_types, all_type_chart, teams, strong_weak_combos
+    global has_false_swipe
 
     team = tuple(sorted(comb + tuple(roster['team'].keys())))
 
@@ -262,7 +264,7 @@ def comb_worker(comb, roster, all_types, all_type_chart, teams,
                                strong_score, weak_score,
                                team))
 
-    return teams
+    # return teams
 
 
 def append_sorted(aList, a):
@@ -335,26 +337,24 @@ def main():
         strong_weak_combos = {}
     print('duration:', datetime.now() - start_time)
 
+    # Initialize multiprocessing
+    manager = multiprocessing.Manager()
+    strong_weak_combos = manager.dict(strong_weak_combos)
+    teams = manager.list()
+    pool = multiprocessing.Pool()
+    # print(strong_weak_combos.items()[0])
+    # exit(1)
+
     # Get all team combinations
     print('getting all team combinations...')
-    save_time = start_time = datetime.now()
-    teams = []
-    counter = 0
-    for comb in itertools.combinations(pk_list,
-                                       team_size - len(roster['team'])):
-        if (counter % 100000 == 0):
-            print(str(counter) + '...')
-
-        teams = comb_worker(comb, roster, all_types, all_type_chart, teams,
-                            strong_weak_combos)
-
-        counter += 1
-        if datetime.now() - save_time > timedelta(minutes=10):
-            print('saving strong_weak_combos...')
-            pickle.dump(strong_weak_combos, open(python_dict, 'wb'))
-            save_time = datetime.now()
-
-    print('total:', counter)
+    start_time = datetime.now()
+    global roster, all_types, all_type_chart, teams, strong_weak_combos
+    global has_false_swipe
+    res = pool.map_async(comb_worker,
+                         itertools.combinations(pk_list,
+                                                team_size -
+                                                len(roster['team'])))
+    res.wait()
     print('duration:', datetime.now() - start_time)
 
     # Print teams
@@ -363,7 +363,7 @@ def main():
     # Save strong_weak_combos
     print('saving strong_weak_combos...')
     start_time = datetime.now()
-    pickle.dump(strong_weak_combos, open(python_dict, 'wb'))
+    pickle.dump(strong_weak_combos._getvalue(), open(python_dict, 'wb'))
     print('duration:', datetime.now() - start_time)
 
 
