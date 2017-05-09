@@ -246,7 +246,7 @@ def get_hash(s):
 
 
 def comb_worker(comb, roster, all_types, all_type_chart, teams,
-                strong_weak_combos):
+                strong_weak_combos, has_false_swipe):
 
     team = tuple(sorted(comb + tuple(roster['team'].keys())))
 
@@ -346,7 +346,7 @@ def main():
             print(str(counter) + '...')
 
         teams = comb_worker(comb, roster, all_types, all_type_chart, teams,
-                            strong_weak_combos)
+                            strong_weak_combos, has_false_swipe)
 
         counter += 1
         if datetime.now() - save_time > timedelta(minutes=10):
