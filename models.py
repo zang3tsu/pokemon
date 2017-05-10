@@ -32,7 +32,6 @@ DB_FILE = 'results_bdb.db'
 #                          results_timeout=10
 #                          )
 DB = BerkeleyDatabase(DB_FILE,
-                      cache_size=(512 * 1024 * 1024),
                       multiversion=True)
 
 

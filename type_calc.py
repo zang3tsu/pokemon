@@ -13,6 +13,7 @@ import pickle
 import apsw
 import random
 import time
+import peewee
 
 from pprint import pprint
 from datetime import datetime, timedelta
@@ -27,7 +28,7 @@ all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count()
 
@@ -188,31 +189,31 @@ def comb_worker(comb_q, start_team,
 
             team_key, score = get_team_score(team, all_types, all_type_chart)
 
-            # while True:
-            #     try:
-            with DB.atomic():
+            while True:
                 try:
-                    # Update team info
-                    team_db = Teams.get(team=team_key)
-                    team_db.base_stats_gmean = score[
-                        'base_stats_gmean']
-                    team_db.weak_score = score['weak_score']
-                    team_db.strong_score = score['strong_score']
-                    team_db.team_score = score['team_score']
-                    team_db.save()
-                except Teams.DoesNotExist:
-                    # Create team
-                    Teams.create(team=team_key,
-                                 base_stats_gmean=score[
-                                     'base_stats_gmean'],
-                                 weak_score=score['weak_score'],
-                                 strong_score=score['strong_score'],
-                                 team_score=score['team_score'])
-                #     break
-                # except apsw.BusyError:
-                #     delay = random.randint(0, 1000) / 1000
-                #     # print('BusyError! Sleeping for', delay, 's')
-                #     time.sleep(delay)
+                    with DB.atomic():
+                        try:
+                            # Update team info
+                            team_db = Teams.get(team=team_key)
+                            team_db.base_stats_gmean = score[
+                                'base_stats_gmean']
+                            team_db.weak_score = score['weak_score']
+                            team_db.strong_score = score['strong_score']
+                            team_db.team_score = score['team_score']
+                            team_db.save()
+                        except Teams.DoesNotExist:
+                            # Create team
+                            Teams.create(team=team_key,
+                                         base_stats_gmean=score[
+                                             'base_stats_gmean'],
+                                         weak_score=score['weak_score'],
+                                         strong_score=score['strong_score'],
+                                         team_score=score['team_score'])
+                    break
+                except peewee.OperationalError:
+                    delay = random.randint(0, 1000) / 1000
+                    # print('BusyError! Sleeping for', delay, 's')
+                    time.sleep(delay)
 
         comb = comb_q.get()
     close_db()
@@ -405,8 +406,8 @@ def main():
     for comb in itertools.combinations(pk_list, team_size - start_team_size):
         comb_q.put(comb)
         counter += 1
-        if counter >= 10:
-            break
+        # if counter >= 10000:
+        # break
     print('counter:', counter)
 
     # Send terminate code
@@ -436,6 +437,10 @@ def main():
                team_db.team])
     close_db()
     print('#' * 40)
+
+    # close db
+    # print('closing db...')
+    # close_db()
 
 
 if __name__ == '__main__':
