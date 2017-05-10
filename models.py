@@ -27,8 +27,8 @@ DB = SqliteQueueDatabase(DB_FILE,
                              ('journal_mode', 'WAL'),
                          ),
                          autostart=False,
-                         queue_max_size=128,
-                         results_timeout=10
+                         queue_max_size=64,
+                         results_timeout=600
                          )
 
 
