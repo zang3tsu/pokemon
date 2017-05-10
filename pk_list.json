@@ -538,13 +538,14 @@
     "Wishiwashi (Solo Form)": {
       "base_stats": 175,
       "type": "WAT"
-    }
-  },
-  "team": {
+    },
     "Decidueye": {
       "base_stats": 530,
       "has_false_swipe": true,
       "type": "GRA/GHO"
     }
+  },
+  "team": {
+
   }
 }
