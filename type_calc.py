@@ -1,4 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
+
+from __future__ import print_function, division
 
 import itertools
 import json
@@ -7,15 +9,14 @@ import multiprocessing
 import numpy
 import os
 import pickle
-import statistics
+# import statistics
 import apsw
 import random
 import time
-import traceback
 
 from pprint import pprint
 from datetime import datetime, timedelta
-from models import connect_db, close_db, Roster, Teams, DB, normalize
+from models import connect_db, close_db, Roster, Teams, DB
 from peewee import fn
 
 numpy.set_printoptions(linewidth=160)
@@ -106,24 +107,24 @@ def load_roster_to_db(roster):
         else:
             trade_evol = False
 
-        # with DB.atomic():
-        try:
-            pk = Roster.get(name=name)
-            pk.base_stats = base_stats
-            pk.type1 = type1
-            pk.type2 = type2
-            pk.has_false_swipe = has_false_swipe
-            pk.mega_evol = mega_evol
-            pk.trade_evol = trade_evol
-            pk.save()
-        except Roster.DoesNotExist:
-            Roster.create(name=name,
-                          base_stats=base_stats,
-                          type1=type1,
-                          type2=type2,
-                          has_false_swipe=has_false_swipe,
-                          mega_evol=mega_evol,
-                          trade_evol=trade_evol)
+        with DB.atomic():
+            try:
+                pk = Roster.get(name=name)
+                pk.base_stats = base_stats
+                pk.type1 = type1
+                pk.type2 = type2
+                pk.has_false_swipe = has_false_swipe
+                pk.mega_evol = mega_evol
+                pk.trade_evol = trade_evol
+                pk.save()
+            except Roster.DoesNotExist:
+                Roster.create(name=name,
+                              base_stats=base_stats,
+                              type1=type1,
+                              type2=type2,
+                              has_false_swipe=has_false_swipe,
+                              mega_evol=mega_evol,
+                              trade_evol=trade_evol)
     close_db()
 
 
@@ -132,17 +133,15 @@ def normalize_base_stats():
     # Get mean and stdev
     mean = Roster.select(fn.avg(Roster.base_stats)).scalar()
     # print('mean:', mean)
-    q = Roster.select(Roster.base_stats)
-    all_base_stats = [pk.base_stats for pk in q.execute()]
-    stdev = statistics.stdev(all_base_stats, mean)
+    stdev = Roster.select(fn.stdev(Roster.base_stats)).scalar()
     # print('stdev:', stdev)
-    # exit(1)
 
     # Normalize base stats
-    # with DB.atomic():
-    q = Roster.select()
-    for pk in q.execute():
-        pk.norm_base_stats = normalize(pk.base_stats, mean, stdev)
+    with DB.atomic():
+        q = (Roster
+             .update(norm_base_stats=fn.normalize(Roster.base_stats,
+                                                  mean, stdev)))
+        q.execute()
     close_db()
 
 
@@ -180,7 +179,6 @@ def get_pk_list(start_team):
 def comb_worker(comb_q, start_team,
                 all_types, all_type_chart):
     connect_db()
-    # DB.start()
     comb = comb_q.get()
     while comb != 'stop':
 
@@ -192,24 +190,24 @@ def comb_worker(comb_q, start_team,
 
             # while True:
             #     try:
-            #         with DB.atomic():
-            try:
-                # Update team info
-                team_db = Teams.get(team=team_key)
-                team_db.base_stats_gmean = score[
-                    'base_stats_gmean']
-                team_db.weak_score = score['weak_score']
-                team_db.strong_score = score['strong_score']
-                team_db.team_score = score['team_score']
-                team_db.save()
-            except Teams.DoesNotExist:
-                # Create team
-                Teams.create(team=team_key,
-                             base_stats_gmean=score[
-                                 'base_stats_gmean'],
-                             weak_score=score['weak_score'],
-                             strong_score=score['strong_score'],
-                             team_score=score['team_score'])
+            with DB.atomic():
+                try:
+                    # Update team info
+                    team_db = Teams.get(team=team_key)
+                    team_db.base_stats_gmean = score[
+                        'base_stats_gmean']
+                    team_db.weak_score = score['weak_score']
+                    team_db.strong_score = score['strong_score']
+                    team_db.team_score = score['team_score']
+                    team_db.save()
+                except Teams.DoesNotExist:
+                    # Create team
+                    Teams.create(team=team_key,
+                                 base_stats_gmean=score[
+                                     'base_stats_gmean'],
+                                 weak_score=score['weak_score'],
+                                 strong_score=score['strong_score'],
+                                 team_score=score['team_score'])
                 #     break
                 # except apsw.BusyError:
                 #     delay = random.randint(0, 1000) / 1000
@@ -217,7 +215,6 @@ def comb_worker(comb_q, start_team,
                 #     time.sleep(delay)
 
         comb = comb_q.get()
-    # DB.stop()
     close_db()
 
 
@@ -283,7 +280,6 @@ def get_base_stats_gmean(team):
         bsg = math.pow(prod, 1 / len(team))
         base_stats_gmean = pcnt(bsg)
     except Exception:
-        traceback.print_exc()
         print('prod:', prod)
         exit(1)
     return base_stats_gmean
@@ -310,7 +306,7 @@ def get_weak_against_score(team, team_key, all_types, all_type_chart):
                 )
         # Get score
         product = numpy.product(weak_combo + 1, axis=0)
-        mean = statistics.mean([numpy.nanmax(product), numpy.nanmin(product)])
+        mean = (numpy.nanmax(product) + numpy.nanmin(product)) / 2
         ws = 1 / mean
         weak_score = pcnt(ws)
 
@@ -355,9 +351,9 @@ def main():
     print('worker_count:', worker_count)
 
     print('loading dual type chart...')
-    if os.path.isfile('dual_type_chart.dat'):
-        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
-                                                     'rb'))
+    if os.path.isfile('dual_type_chart-py2.7.dat'):
+        all_types, all_type_chart = pickle.load(
+            open('dual_type_chart-py2.7.dat', 'rb'))
     else:
         # Read type chart
         single_type_chart = read_single_type_chart()
@@ -366,7 +362,7 @@ def main():
         all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
 
         pickle.dump((all_types, all_type_chart),
-                    open('dual_type_chart.dat', 'wb'))
+                    open('dual_type_chart-py2.7.dat', 'wb'))
 
     # Connect to db
     # print('connecting to db...')
@@ -402,15 +398,15 @@ def main():
         p.start()
         workers.append(p)
 
-    # Get all team combinations
+    # # Get all team combinations
     print('getting all team combinations...')
     start_time = datetime.now()
     counter = 0
     for comb in itertools.combinations(pk_list, team_size - start_team_size):
         comb_q.put(comb)
         counter += 1
-    # if counter >= 100000:
-    #     break
+        if counter >= 10:
+            break
     print('counter:', counter)
 
     # Send terminate code
@@ -440,10 +436,6 @@ def main():
                team_db.team])
     close_db()
     print('#' * 40)
-
-    # Close db connection
-    # print('closing db connection...')
-    # close_db()
 
 
 if __name__ == '__main__':

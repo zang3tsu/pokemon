@@ -5,8 +5,9 @@ import math
 
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.sqliteq import SqliteQueueDatabase
+from playhouse.berkeleydb import BerkeleyDatabase
 
-DB_FILE = 'results_sqlite.db'
+DB_FILE = 'results_bdb.db'
 # DB = APSWDatabase(DB_FILE,
 #                   pragmas=(('journal_mode', 'WAL'),
 #                            ('cache_size', 512000),
@@ -22,14 +23,17 @@ DB_FILE = 'results_sqlite.db'
 #                   ),
 #                   c_extensions=True,
 #                   timeout=10000)
-DB = SqliteQueueDatabase(DB_FILE,
-                         pragmas=(
-                             ('journal_mode', 'WAL'),
-                         ),
-                         autostart=False,
-                         queue_max_size=128,
-                         results_timeout=10
-                         )
+# DB = SqliteQueueDatabase(DB_FILE,
+#                          pragmas=(
+#                              ('journal_mode', 'WAL'),
+#                          ),
+#                          autostart=False,
+#                          queue_max_size=128,
+#                          results_timeout=10
+#                          )
+DB = BerkeleyDatabase(DB_FILE,
+                      cache_size=(512 * 1024 * 1024),
+                      multiversion=True)
 
 
 class BaseModel(peewee.Model):
@@ -80,22 +84,22 @@ class Teams(BaseModel):
 def connect_db():
     # Connect to database
     DB.connect()
-    # DB.load_extension('/mnt/store02/pokemon/libsqlitefunctions')
-    DB.start()
+    DB.load_extension('/mnt/store02/pokemon/libsqlitefunctions')
+    # DB.start()
     DB.create_tables([Roster, Teams], safe=True)
 
 
 def close_db():
     # Close database
-    if not DB.is_stopped():
-        DB.stop()
+    # if not DB.is_stopped():
+    #     DB.stop()
     if not DB.is_closed():
         # DB.execute_sql('VACUUM;')
         # DB.execute_sql('PRAGMA optimize;')
         DB.close()
 
 
-# @DB.func()
+@DB.func()
 def normalize(f, mean, stdev):
     z = (f - mean) / stdev
     p = 0.5 * (1 + math.erf(z / math.sqrt(2)))
