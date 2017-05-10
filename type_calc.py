@@ -254,7 +254,7 @@ def get_team_score(team, all_types, all_type_chart):
                   * math.pow(strong_score, 3)
                   * math.pow(weak_score, 1),
                   1 / 5)
-    team_score = pcnt(ts / 100)
+    team_score = float('%.2f' % ts)
     # print('team_score:', team_score)
 
     score = {'team_score': team_score,
@@ -266,7 +266,7 @@ def get_team_score(team, all_types, all_type_chart):
 
 
 def pcnt(x):
-    return float('%.2f' % x) * 100
+    return float('%.2f' % (x * 100))
 
 
 def get_base_stats_gmean(team):
@@ -403,8 +403,8 @@ def main():
     for comb in itertools.combinations(pk_list, team_size - start_team_size):
         comb_q.put(comb)
         counter += 1
-        # if counter >= 100000:
-        #     break
+    # if counter >= 100000:
+    #     break
     print('counter:', counter)
 
     # Send terminate code
@@ -423,15 +423,15 @@ def main():
     connect_db()
     q = (Teams
          .select()
-         .where()
-         .order_by(Teams.team_score)
+         .order_by(Teams.team_score.desc())
          .limit(teams_size))
     print('team_score,base_stats_gmean,strong_score,weak_score,team')
-    for team in q.execute():
-        print(','.join([team.team_score,
-                        team.base_stats_gmean,
-                        team.strong_score, team.weak_score,
-                        team.team]))
+    for team_db in q.execute():
+        print([team_db.team_score,
+               team_db.base_stats_gmean,
+               team_db.strong_score,
+               team_db.weak_score,
+               team_db.team])
     close_db()
     print('#' * 40)
 
