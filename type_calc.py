@@ -11,10 +11,11 @@ import statistics
 import apsw
 import random
 import time
+import traceback
 
 from pprint import pprint
 from datetime import datetime, timedelta
-from models import connect_db, close_db, Roster, Teams, DB
+from models import connect_db, close_db, Roster, Teams, DB, normalize
 from peewee import fn
 
 numpy.set_printoptions(linewidth=160)
@@ -82,7 +83,7 @@ def get_strong_against(all_types, all_type_chart, types):
 
 
 def load_roster_to_db(roster):
-    # connect_db()
+    connect_db()
     for k, v in roster.items():
         name = k
         base_stats = v['base_stats']
@@ -123,24 +124,26 @@ def load_roster_to_db(roster):
                           has_false_swipe=has_false_swipe,
                           mega_evol=mega_evol,
                           trade_evol=trade_evol)
-    # close_db()
+    close_db()
 
 
 def normalize_base_stats():
-    # connect_db()
+    connect_db()
     # Get mean and stdev
     mean = Roster.select(fn.avg(Roster.base_stats)).scalar()
     # print('mean:', mean)
-    stdev = Roster.select(fn.stdev(Roster.base_stats)).scalar()
+    q = Roster.select(Roster.base_stats)
+    all_base_stats = [pk.base_stats for pk in q.execute()]
+    stdev = statistics.stdev(all_base_stats, mean)
     # print('stdev:', stdev)
+    # exit(1)
 
     # Normalize base stats
     # with DB.atomic():
-    q = (Roster
-         .update(norm_base_stats=fn.normalize(Roster.base_stats,
-                                              mean, stdev)))
-    q.execute()
-    # close_db()
+    q = Roster.select()
+    for pk in q.execute():
+        pk.norm_base_stats = normalize(pk.base_stats, mean, stdev)
+    close_db()
 
 
 def get_pk_list(start_team):
@@ -163,9 +166,9 @@ def get_pk_list(start_team):
              .select(Roster.name)
              .where((Roster.trade_evol == False)
                     & (Roster.mega_evol == False)))
-    # connect_db()
+    connect_db()
     pk_list = [pk.name for pk in q.execute()]
-    # close_db()
+    close_db()
     # print(pk_list[:5])
     # Remove start team from pk_list
     for pk in start_team:
@@ -176,7 +179,8 @@ def get_pk_list(start_team):
 
 def comb_worker(comb_q, start_team,
                 all_types, all_type_chart):
-    # connect_db()
+    connect_db()
+    # DB.start()
     comb = comb_q.get()
     while comb != 'stop':
 
@@ -213,7 +217,8 @@ def comb_worker(comb_q, start_team,
                 #     time.sleep(delay)
 
         comb = comb_q.get()
-    # close_db()
+    # DB.stop()
+    close_db()
 
 
 def check_if_has_false_swipe(team):
@@ -254,7 +259,7 @@ def get_team_score(team, all_types, all_type_chart):
                   * math.pow(strong_score, 3)
                   * math.pow(weak_score, 1),
                   1 / 5)
-    team_score = pcnt(ts / 100)
+    team_score = float('%.2f' % ts)
     # print('team_score:', team_score)
 
     score = {'team_score': team_score,
@@ -266,7 +271,7 @@ def get_team_score(team, all_types, all_type_chart):
 
 
 def pcnt(x):
-    return float('%.2f' % x) * 100
+    return float('%.2f' % (x * 100))
 
 
 def get_base_stats_gmean(team):
@@ -278,6 +283,7 @@ def get_base_stats_gmean(team):
         bsg = math.pow(prod, 1 / len(team))
         base_stats_gmean = pcnt(bsg)
     except Exception:
+        traceback.print_exc()
         print('prod:', prod)
         exit(1)
     return base_stats_gmean
@@ -363,8 +369,8 @@ def main():
                     open('dual_type_chart.dat', 'wb'))
 
     # Connect to db
-    print('connecting to db...')
-    connect_db()
+    # print('connecting to db...')
+    # connect_db()
 
     # Read roster and load to db
     print('reading roster and loading to db...')
@@ -396,15 +402,15 @@ def main():
         p.start()
         workers.append(p)
 
-    # # Get all team combinations
+    # Get all team combinations
     print('getting all team combinations...')
     start_time = datetime.now()
     counter = 0
     for comb in itertools.combinations(pk_list, team_size - start_team_size):
         comb_q.put(comb)
         counter += 1
-        # if counter >= 100000:
-        #     break
+    # if counter >= 100000:
+    #     break
     print('counter:', counter)
 
     # Send terminate code
@@ -420,24 +426,24 @@ def main():
 
     # Print teams
     print('#' * 40)
-    # connect_db()
+    connect_db()
     q = (Teams
          .select()
-         .where()
-         .order_by(Teams.team_score)
+         .order_by(Teams.team_score.desc())
          .limit(teams_size))
     print('team_score,base_stats_gmean,strong_score,weak_score,team')
-    for team in q.execute():
-        print(','.join([team.team_score,
-                        team.base_stats_gmean,
-                        team.strong_score, team.weak_score,
-                        team.team]))
-    # close_db()
+    for team_db in q.execute():
+        print([team_db.team_score,
+               team_db.base_stats_gmean,
+               team_db.strong_score,
+               team_db.weak_score,
+               team_db.team])
+    close_db()
     print('#' * 40)
 
     # Close db connection
-    print('closing db connection...')
-    close_db()
+    # print('closing db connection...')
+    # close_db()
 
 
 if __name__ == '__main__':
