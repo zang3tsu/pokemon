@@ -111,11 +111,6 @@
       "base_stats": 535,
       "type": "POI/FLY"
     },
-    "Decidueye": {
-      "base_stats": 530,
-      "has_false_swipe": true,
-      "type": "GRA/GHO"
-    },
     "Drifblim": {
       "base_stats": 498,
       "type": "GHO/FLY"
@@ -545,5 +540,11 @@
       "type": "WAT"
     }
   },
-  "team": {}
+  "team": {
+    "Decidueye": {
+      "base_stats": 530,
+      "has_false_swipe": true,
+      "type": "GRA/GHO"
+    }
+  }
 }
