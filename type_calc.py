@@ -82,7 +82,7 @@ def get_strong_against(all_types, all_type_chart, types):
 
 
 def load_roster_to_db(roster):
-    connect_db()
+    # connect_db()
     for k, v in roster.items():
         name = k
         base_stats = v['base_stats']
@@ -105,29 +105,29 @@ def load_roster_to_db(roster):
         else:
             trade_evol = False
 
-        with DB.atomic():
-            try:
-                pk = Roster.get(name=name)
-                pk.base_stats = base_stats
-                pk.type1 = type1
-                pk.type2 = type2
-                pk.has_false_swipe = has_false_swipe
-                pk.mega_evol = mega_evol
-                pk.trade_evol = trade_evol
-                pk.save()
-            except Roster.DoesNotExist:
-                Roster.create(name=name,
-                              base_stats=base_stats,
-                              type1=type1,
-                              type2=type2,
-                              has_false_swipe=has_false_swipe,
-                              mega_evol=mega_evol,
-                              trade_evol=trade_evol)
-    close_db()
+        # with DB.atomic():
+        try:
+            pk = Roster.get(name=name)
+            pk.base_stats = base_stats
+            pk.type1 = type1
+            pk.type2 = type2
+            pk.has_false_swipe = has_false_swipe
+            pk.mega_evol = mega_evol
+            pk.trade_evol = trade_evol
+            pk.save()
+        except Roster.DoesNotExist:
+            Roster.create(name=name,
+                          base_stats=base_stats,
+                          type1=type1,
+                          type2=type2,
+                          has_false_swipe=has_false_swipe,
+                          mega_evol=mega_evol,
+                          trade_evol=trade_evol)
+    # close_db()
 
 
 def normalize_base_stats():
-    connect_db()
+    # connect_db()
     # Get mean and stdev
     mean = Roster.select(fn.avg(Roster.base_stats)).scalar()
     # print('mean:', mean)
@@ -135,12 +135,12 @@ def normalize_base_stats():
     # print('stdev:', stdev)
 
     # Normalize base stats
-    with DB.atomic():
-        q = (Roster
-             .update(norm_base_stats=fn.normalize(Roster.base_stats,
-                                                  mean, stdev)))
-        q.execute()
-    close_db()
+    # with DB.atomic():
+    q = (Roster
+         .update(norm_base_stats=fn.normalize(Roster.base_stats,
+                                              mean, stdev)))
+    q.execute()
+    # close_db()
 
 
 def get_pk_list(start_team):
@@ -163,9 +163,9 @@ def get_pk_list(start_team):
              .select(Roster.name)
              .where((Roster.trade_evol == False)
                     & (Roster.mega_evol == False)))
-    connect_db()
+    # connect_db()
     pk_list = [pk.name for pk in q.execute()]
-    close_db()
+    # close_db()
     # print(pk_list[:5])
     # Remove start team from pk_list
     for pk in start_team:
@@ -176,7 +176,7 @@ def get_pk_list(start_team):
 
 def comb_worker(comb_q, start_team,
                 all_types, all_type_chart):
-    connect_db()
+    # connect_db()
     comb = comb_q.get()
     while comb != 'stop':
 
@@ -186,34 +186,34 @@ def comb_worker(comb_q, start_team,
 
             team_key, score = get_team_score(team, all_types, all_type_chart)
 
-            while True:
-                try:
-                    with DB.atomic():
-                        try:
-                            # Update team info
-                            team_db = Teams.get(team=team_key)
-                            team_db.base_stats_gmean = score[
-                                'base_stats_gmean']
-                            team_db.weak_score = score['weak_score']
-                            team_db.strong_score = score['strong_score']
-                            team_db.team_score = score['team_score']
-                            team_db.save()
-                        except Teams.DoesNotExist:
-                            # Create team
-                            Teams.create(team=team_key,
-                                         base_stats_gmean=score[
-                                             'base_stats_gmean'],
-                                         weak_score=score['weak_score'],
-                                         strong_score=score['strong_score'],
-                                         team_score=score['team_score'])
-                    break
-                except apsw.BusyError:
-                    delay = random.randint(0, 1000) / 1000
-                    # print('BusyError! Sleeping for', delay, 's')
-                    time.sleep(delay)
+            # while True:
+            #     try:
+            #         with DB.atomic():
+            try:
+                # Update team info
+                team_db = Teams.get(team=team_key)
+                team_db.base_stats_gmean = score[
+                    'base_stats_gmean']
+                team_db.weak_score = score['weak_score']
+                team_db.strong_score = score['strong_score']
+                team_db.team_score = score['team_score']
+                team_db.save()
+            except Teams.DoesNotExist:
+                # Create team
+                Teams.create(team=team_key,
+                             base_stats_gmean=score[
+                                 'base_stats_gmean'],
+                             weak_score=score['weak_score'],
+                             strong_score=score['strong_score'],
+                             team_score=score['team_score'])
+                #     break
+                # except apsw.BusyError:
+                #     delay = random.randint(0, 1000) / 1000
+                #     # print('BusyError! Sleeping for', delay, 's')
+                #     time.sleep(delay)
 
         comb = comb_q.get()
-    close_db()
+    # close_db()
 
 
 def check_if_has_false_swipe(team):
@@ -363,8 +363,8 @@ def main():
                     open('dual_type_chart.dat', 'wb'))
 
     # Connect to db
-    # print('connecting to db...')
-    # connect_db()
+    print('connecting to db...')
+    connect_db()
 
     # Read roster and load to db
     print('reading roster and loading to db...')
@@ -420,7 +420,7 @@ def main():
 
     # Print teams
     print('#' * 40)
-    connect_db()
+    # connect_db()
     q = (Teams
          .select()
          .where()
@@ -432,8 +432,12 @@ def main():
                         team.base_stats_gmean,
                         team.strong_score, team.weak_score,
                         team.team]))
-    close_db()
+    # close_db()
     print('#' * 40)
+
+    # Close db connection
+    print('closing db connection...')
+    close_db()
 
 
 if __name__ == '__main__':
