@@ -7,6 +7,7 @@ from playhouse.apsw_ext import APSWDatabase
 from playhouse.sqliteq import SqliteQueueDatabase
 
 DB_FILE = 'results_sqlite.db'
+
 # DB = APSWDatabase(DB_FILE,
 #                   pragmas=(('journal_mode', 'WAL'),
 #                            ('cache_size', 512000),
@@ -16,18 +17,23 @@ DB_FILE = 'results_sqlite.db'
 #                   c_extensions=True,
 #                   threadlocals=True,
 #                   timeout=10000)
+
 # DB = APSWDatabase(DB_FILE,
 #                   pragmas=(
 #                       ('journal_mode', 'WAL'),
 #                   ),
 #                   c_extensions=True,
 #                   timeout=10000)
+
 DB = SqliteQueueDatabase(DB_FILE,
                          pragmas=(
                              ('journal_mode', 'WAL'),
+                             ('cache_size', 512000),
+                             ('mmap_size', 512 * 1024 * 1024),
+                             ('temp_store ', 'MEMORY')
                          ),
                          autostart=False,
-                         queue_max_size=64,
+                         queue_max_size=7680,
                          results_timeout=600
                          )
 

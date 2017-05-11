@@ -143,6 +143,7 @@ def normalize_base_stats():
     q = Roster.select()
     for pk in q.execute():
         pk.norm_base_stats = normalize(pk.base_stats, mean, stdev)
+        pk.save()
     close_db()
 
 
