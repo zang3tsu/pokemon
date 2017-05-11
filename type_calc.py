@@ -32,13 +32,34 @@ def read_single_type_chart():
     # Read type_chart.csv
     single_type_chart_ls = []
     with open('single_type_chart.csv', 'r') as open_file:
-        hdr = True
         single_type_chart_ls = []
         for l in open_file:
             r = [float(x) for x in l.strip().split(',')]
             single_type_chart_ls.append(r)
     single_type_chart = numpy.array(single_type_chart_ls)
     return single_type_chart
+
+
+def generate_dual_type_chart(single_type_chart):
+    # Get all types
+    all_types = []
+    for t in all_single_types:
+        all_types.append(tuple([t]))
+    for i in itertools.combinations(all_single_types, 2):
+        all_types.append(tuple(sorted(i)))
+
+    # Extend single type chart horizontally
+    all_type_chart = single_type_chart.copy()
+    for i in range(len(all_single_types), len(all_types)):
+        weak = get_weak_against(single_type_chart, all_types[i])
+        all_type_chart = numpy.concatenate((all_type_chart, weak))
+
+    # Extend single type chart vertically
+    for i in range(len(all_single_types), len(all_types)):
+        strong = get_strong_against(all_types, all_type_chart, all_types[i])
+        all_type_chart = numpy.concatenate((all_type_chart, strong), axis=1)
+
+    return all_types, all_type_chart
 
 
 def get_weak_against(single_type_chart, types):
@@ -72,6 +93,18 @@ def normalize_base_stats(roster):
             z = (inf['base_stats'] - mean) / stdev
             p = 0.5 * (1 + math.erf(z / math.sqrt(2)))
             inf['norm_base_stats'] = p
+
+
+def get_pk_list(roster):
+    pk_list = []
+    for pk, pk_info in roster['all'].items():
+        if trade_evol and 'trade_evol' in pk_info and pk_info['trade_evol']:
+            pk_list.append(pk)
+        elif mega_evol and 'mega_evol' in pk_info and pk_info['mega_evol']:
+            pk_list.append(pk)
+        elif 'trade_evol' not in pk_info and 'mega_evol' not in pk_info:
+            pk_list.append(pk)
+    return pk_list
 
 
 def get_base_stats_gmean(roster, team):
@@ -189,28 +222,6 @@ def get_team_score(all_types, all_type_chart, strong_weak_combos, roster, team):
     return team_score, base_stats_gmean, weak_score, strong_score
 
 
-def generate_dual_type_chart(single_type_chart):
-    # Get all types
-    all_types = []
-    for t in all_single_types:
-        all_types.append(tuple([t]))
-    for i in itertools.combinations(all_single_types, 2):
-        all_types.append(tuple(sorted(i)))
-
-    # Extend single type chart horizontally
-    all_type_chart = single_type_chart.copy()
-    for i in range(len(all_single_types), len(all_types)):
-        weak = get_weak_against(single_type_chart, all_types[i])
-        all_type_chart = numpy.concatenate((all_type_chart, weak))
-
-    # Extend single type chart vertically
-    for i in range(len(all_single_types), len(all_types)):
-        strong = get_strong_against(all_types, all_type_chart, all_types[i])
-        all_type_chart = numpy.concatenate((all_type_chart, strong), axis=1)
-
-    return all_types, all_type_chart
-
-
 def check_if_has_false_swipe(roster, team):
     for pk in team:
         if pk in roster['team']:
@@ -305,14 +316,7 @@ def main():
 
     # Get pokemon list
     print('getting pokemon list...')
-    pk_list = []
-    for pk, pk_info in roster['all'].items():
-        if trade_evol and 'trade_evol' in pk_info and pk_info['trade_evol']:
-            pk_list.append(pk)
-        elif mega_evol and 'mega_evol' in pk_info and pk_info['mega_evol']:
-            pk_list.append(pk)
-        elif 'trade_evol' not in pk_info and 'mega_evol' not in pk_info:
-            pk_list.append(pk)
+    pk_list = get_pk_list(roster)
 
     # Load strong_weak_combos
     print('loading strong_weak_combos...')
