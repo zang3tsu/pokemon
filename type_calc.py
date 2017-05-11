@@ -28,7 +28,7 @@ trade_evol = True
 mega_evol = False
 has_false_swipe = False
 teams_size = 20
-worker_count = multiprocessing.cpu_count()
+worker_count = multiprocessing.cpu_count() - 1
 
 
 def read_single_type_chart():
@@ -130,18 +130,19 @@ def load_roster_to_db(roster):
 def normalize_base_stats():
     connect_db()
     # Get mean and stdev
-    mean = Roster.select(fn.avg(Roster.base_stats)).scalar()
-    # print('mean:', mean)
+    mean = float(Roster.select(fn.avg(Roster.base_stats)).scalar())
+    # print('mean:', repr(mean))
     q = Roster.select(Roster.base_stats)
     all_base_stats = [pk.base_stats for pk in q.execute()]
-    stdev = statistics.stdev(all_base_stats, mean)
-    # print('stdev:', stdev)
+    stdev = float(statistics.stdev(all_base_stats, mean))
+    # print('stdev:', repr(stdev))
     # exit(1)
 
     # Normalize base stats
     # with DB.atomic():
     q = Roster.select()
     for pk in q.execute():
+        # print('pk.base_stats:', repr(pk.base_stats))
         pk.norm_base_stats = normalize(pk.base_stats, mean, stdev)
         pk.save()
     close_db()
@@ -257,9 +258,9 @@ def get_team_score(team, all_types, all_type_chart):
 
     # Get geometric mean of all scores
     ts = math.pow(math.pow(base_stats_gmean, 1)
-                  * math.pow(strong_score, 4)
+                  * math.pow(strong_score, 5)
                   * math.pow(weak_score, 1),
-                  1 / 6)
+                  1 / 7)
     team_score = float('%.2f' % ts)
     # print('team_score:', team_score)
 
@@ -410,8 +411,8 @@ def main():
     for comb in itertools.combinations(pk_list, team_size - start_team_size):
         comb_q.put(comb)
         counter += 1
-    # if counter >= 100000:
-    #     break
+        if counter >= 100000:
+            break
     print('counter:', counter)
 
     # Send terminate code

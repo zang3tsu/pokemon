@@ -5,6 +5,8 @@ import math
 
 from playhouse.apsw_ext import APSWDatabase
 from playhouse.sqliteq import SqliteQueueDatabase
+from peewee import MySQLDatabase
+from settings import *
 
 DB_FILE = 'results_sqlite.db'
 
@@ -25,17 +27,26 @@ DB_FILE = 'results_sqlite.db'
 #                   c_extensions=True,
 #                   timeout=10000)
 
-DB = SqliteQueueDatabase(DB_FILE,
-                         pragmas=(
-                             ('journal_mode', 'WAL'),
-                             ('cache_size', 512000),
-                             ('mmap_size', 512 * 1024 * 1024),
-                             ('temp_store ', 'MEMORY')
-                         ),
-                         autostart=False,
-                         queue_max_size=7680,
-                         results_timeout=600
-                         )
+# DB = SqliteQueueDatabase(DB_FILE,
+#                          pragmas=(
+#                              ('journal_mode', 'WAL'),
+#                              ('cache_size', 512000),
+#                              ('mmap_size', 512 * 1024 * 1024),
+#                              ('temp_store ', 'MEMORY')
+#                          ),
+#                          autostart=False,
+#                          queue_max_size=7680,
+#                          results_timeout=600
+#                          )
+
+DB = MySQLDatabase(
+    DB_NAME,
+    user=DB_USER,
+    password=DB_PASS,
+    host=DB_HOST,
+    charset='latin1',
+    threadlocals=True
+)
 
 
 class BaseModel(peewee.Model):
@@ -87,14 +98,14 @@ def connect_db():
     # Connect to database
     DB.connect()
     # DB.load_extension('/mnt/store02/pokemon/libsqlitefunctions')
-    DB.start()
+    # DB.start()
     DB.create_tables([Roster, Teams], safe=True)
 
 
 def close_db():
     # Close database
-    if not DB.is_stopped():
-        DB.stop()
+    # if not DB.is_stopped():
+    #     DB.stop()
     if not DB.is_closed():
         # DB.execute_sql('VACUUM;')
         # DB.execute_sql('PRAGMA optimize;')
@@ -103,6 +114,10 @@ def close_db():
 
 # @DB.func()
 def normalize(f, mean, stdev):
+    # print('f:', repr(f))
+    # print('mean:', repr(mean))
+    # print('stdev:', repr(stdev))
     z = (f - mean) / stdev
+    # print('z:', repr(z))
     p = 0.5 * (1 + math.erf(z / math.sqrt(2)))
     return p
