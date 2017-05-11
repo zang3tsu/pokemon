@@ -26,7 +26,7 @@ all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count()
 
@@ -257,9 +257,9 @@ def get_team_score(team, all_types, all_type_chart):
 
     # Get geometric mean of all scores
     ts = math.pow(math.pow(base_stats_gmean, 1)
-                  * math.pow(strong_score, 3)
+                  * math.pow(strong_score, 4)
                   * math.pow(weak_score, 1),
-                  1 / 5)
+                  1 / 6)
     team_score = float('%.2f' % ts)
     # print('team_score:', team_score)
 
