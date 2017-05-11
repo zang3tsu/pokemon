@@ -19,7 +19,7 @@ numpy.set_printoptions(linewidth=160)
 all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
                     'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO',
                     'DRA', 'DAR', 'STE', 'FAI']
-team_size = 4
+team_size = 5
 trade_evol = True
 mega_evol = False
 has_false_swipe = True
@@ -107,119 +107,26 @@ def get_pk_list(roster):
     return pk_list
 
 
-def get_base_stats_gmean(roster, team):
-    p = 1
-    for pk in team:
-        if pk in roster['team']:
-            p *= roster['team'][pk]['norm_base_stats']
-        elif pk in roster['all']:
-            p *= roster['all'][pk]['norm_base_stats']
-        else:
-            print(pk, 'not in either team/all list! Exiting.')
-            exit(1)
-    try:
-        base_stats_gmean = math.pow(p, 1 / len(team))
-    except Exception:
-        print('p:', p)
-        exit(1)
-    return base_stats_gmean
-
-
-def get_types(roster, pk):
-    types = None
-    if pk in roster['team']:
-        types = tuple(sorted(roster['team'][pk]['type'].split('/')))
-    elif pk in roster['all']:
-        types = tuple(sorted(roster['all'][pk]['type'].split('/')))
-    else:
-        print(pk, 'not in either team/all list! Exiting.')
-        exit(1)
-    return types
-
-
-def get_weak_against_score(all_types, all_type_chart, strong_weak_combos,
-                           roster, team):
-    team_key = ','.join(team)
-    # Get weaknesses
-    if (team_key in strong_weak_combos
-            and 'weak_coverage' in strong_weak_combos[team_key]):
-        coverage = strong_weak_combos[team_key]['weak_coverage']
-    else:
-        weak_combo = None
-        for pk in team:
-            types = get_types(roster, pk)
-            if weak_combo is None:
-                weak_combo = [all_type_chart[all_types.index(types)]]
-            else:
-                weak_combo = numpy.concatenate(
-                    (weak_combo, [all_type_chart[all_types.index(types)]])
-                )
-
-        # Get coverage
-        product = numpy.product(weak_combo + 1, axis=0)
-        mean = statistics.mean([numpy.nanmax(product), numpy.nanmin(product)])
-        coverage = 1 / mean
-
-        if team_key not in strong_weak_combos:
-            strong_weak_combos[team_key] = {}
-        strong_weak_combos[team_key]['weak_coverage'] = coverage
-
-    return coverage
-
-
-def get_strong_against_score(all_types, all_type_chart, strong_weak_combos,
-                             roster, team):
-    team_key = ','.join(team)
-    # Get strengths
-    if (team_key in strong_weak_combos
-            and 'strong_coverage' in strong_weak_combos[team_key]):
-        coverage = strong_weak_combos[team_key]['strong_coverage']
-    else:
-        strong_combo = None
-        for pk in team:
-            types = get_types(roster, pk)
-            if strong_combo is None:
-                strong_combo = [all_type_chart[all_types.index(types)]]
-            else:
-                strong_combo = numpy.concatenate(
-                    (strong_combo, [
-                     all_type_chart[all_types.index(types)]])
-                )
-
-        counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
-        coverage = counter / len(all_types)
-
-        if team_key not in strong_weak_combos:
-            strong_weak_combos[team_key] = {}
-        strong_weak_combos[team_key]['strong_coverage'] = coverage
-
-    return coverage
-
-
-def pcnt(x):
-    return float('%.2f' % x)
-
-
-def get_team_score(all_types, all_type_chart, strong_weak_combos, roster, team):
-
-    # Get normalized base stats geometric mean
-    base_stats_gmean = pcnt(get_base_stats_gmean(roster, team) * 100)
-
-    # Get weak against score
-    weak_score = pcnt(get_weak_against_score(
-        all_types, all_type_chart, strong_weak_combos, roster, team) * 100)
-
-    # Get strong against score
-    strong_score = pcnt(get_strong_against_score(
-        all_types, all_type_chart, strong_weak_combos, roster, team) * 100)
-
-    # Get geometric mean of all scores
-    team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
-                               * math.pow(strong_score, 3)
-                               * math.pow(weak_score, 1),
-                               1 / 5))
-
-    return team_score, base_stats_gmean, weak_score, strong_score
+def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
+    teams = []
+    counter = 0
+    for comb in itertools.combinations(pk_list,
+                                       team_size - len(roster['team'])):
+        # Get team
+        team = tuple(sorted(comb + tuple(roster['team'].keys())))
+        # Check if team has false swipe
+        if ((has_false_swipe and check_if_has_false_swipe(roster, team))
+                or not has_false_swipe):
+            # Get team score
+            score = get_team_score(team, roster, all_types, all_type_chart)
+            teams = append_sorted(teams, score + (team,))
+            counter += 1
+            if counter % 100000 == 0:
+                print(str(counter) + '...')
+            # if counter >= 100000:
+            #     break
+    print('counter:', counter)
+    return teams
 
 
 def check_if_has_false_swipe(roster, team):
@@ -239,47 +146,114 @@ def check_if_has_false_swipe(roster, team):
     return False
 
 
-def comb_worker(comb, roster, all_types, all_type_chart, strong_weak_combos,
-                teams):
-    team = tuple(sorted(comb + tuple(roster['team'].keys())))
-    if ((has_false_swipe and check_if_has_false_swipe(roster, team))
-            or not has_false_swipe):
-        # Get team score
-        results = get_team_score(
-            all_types, all_type_chart, strong_weak_combos, roster, team)
-        team_score, base_stats_gmean, weak_score, strong_score = results
-        # Add to list
-        # teams.append((team_score, base_stats_gmean,
-        #               strong_score, weak_score, team))
-        teams = append_sorted(teams,
-                              (team_score, base_stats_gmean,
-                               strong_score, weak_score,
-                               team))
-        # print('#' * 40)
-        # print('teams:')
-        # print(teams)
-        # Trim list
-        # if len(teams) > teams_size:
-        #     teams = sorted(teams, reverse=True)[:20]
-    return teams
+def get_team_score(team, roster, all_types, all_type_chart):
+
+    # Get normalized base stats geometric mean
+    base_stats_gmean = get_base_stats_gmean(team, roster)
+
+    # Get weak against score
+    weak_score = get_weak_against_score(team, roster,
+                                        all_types, all_type_chart)
+
+    # Get strong against score
+    strong_score = get_strong_against_score(team, roster,
+                                            all_types, all_type_chart)
+
+    # Get geometric mean of all scores
+    team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
+                               * math.pow(strong_score, 3)
+                               * math.pow(weak_score, 1),
+                               1 / 5)
+                      / 100)
+
+    return team_score, base_stats_gmean, strong_score, weak_score
+
+
+def pcnt(x):
+    return float('%.2f' % (x * 100))
+
+
+def get_base_stats_gmean(team, roster):
+    prod = 1
+    for pk in team:
+        if pk in roster['team']:
+            prod *= roster['team'][pk]['norm_base_stats']
+        elif pk in roster['all']:
+            prod *= roster['all'][pk]['norm_base_stats']
+        else:
+            print(pk, 'not in either team/all list! Exiting.')
+            exit(1)
+    try:
+        base_stats_gmean = math.pow(prod, 1 / len(team))
+    except Exception:
+        print('prod:', prod)
+        exit(1)
+    return pcnt(base_stats_gmean)
+
+
+def get_types(roster, pk):
+    types = None
+    if pk in roster['team']:
+        types = tuple(sorted(roster['team'][pk]['type'].split('/')))
+    elif pk in roster['all']:
+        types = tuple(sorted(roster['all'][pk]['type'].split('/')))
+    else:
+        print(pk, 'not in either team/all list! Exiting.')
+        exit(1)
+    return types
+
+
+def get_weak_against_score(team, roster, all_types, all_type_chart):
+    # Get weaknesses
+    weak_combo = None
+    for pk in team:
+        types = get_types(roster, pk)
+        if weak_combo is None:
+            weak_combo = [all_type_chart[all_types.index(types)]]
+        else:
+            weak_combo = numpy.concatenate(
+                (weak_combo, [all_type_chart[all_types.index(types)]])
+            )
+    # Get weak score
+    product = numpy.product(weak_combo + 1, axis=0)
+    mean = (numpy.nanmax(product) + numpy.nanmin(product)) / 2
+    weak_score = 1 / mean
+
+    return pcnt(weak_score)
+
+
+def get_strong_against_score(team, roster, all_types, all_type_chart):
+    # Get strengths
+    strong_combo = None
+    for pk in team:
+        types = get_types(roster, pk)
+        if strong_combo is None:
+            strong_combo = [all_type_chart[all_types.index(types)]]
+        else:
+            strong_combo = numpy.concatenate(
+                (strong_combo, [
+                 all_type_chart[all_types.index(types)]])
+            )
+    # Get strong score
+    counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
+    strong_score = counter / len(all_types)
+
+    return pcnt(strong_score)
 
 
 def append_sorted(aList, a):
-    if not aList:
-        aList = [a]
+    did_break = False
+    for i in range(len(aList)):
+        if a > aList[i]:
+            did_break = True
+            break
+    if did_break:
+        aList.insert(i, a)
     else:
-        did_break = False
-        for i in range(len(aList)):
-            if a > aList[i]:
-                did_break = True
-                break
-        if did_break:
-            aList.insert(i, a)
-        else:
-            aList.append(a)
-        if len(aList) > teams_size:
-            # aList = aList[:teams_size]
-            aList.pop()
+        aList.append(a)
+    if len(aList) > teams_size:
+        # aList = aList[:teams_size]
+        aList.pop()
     return aList
 
 
@@ -317,48 +291,17 @@ def main():
     # Get pokemon list
     print('getting pokemon list...')
     pk_list = get_pk_list(roster)
-
-    # Load strong_weak_combos
-    print('loading strong_weak_combos...')
-    start_time = datetime.now()
-    if os.path.isfile('strong_weak_combos.dat'):
-        strong_weak_combos = pickle.load(open('strong_weak_combos.dat', 'rb'))
-    else:
-        strong_weak_combos = {}
-    print('duration:', datetime.now() - start_time)
+    print('pk_list size:', len(pk_list))
 
     # Get all team combinations
-    # with shelve.open('strong_weak_combos.db', writeback=True) as
-    # strong_weak_combos:
-    print('getting all team combinations...')
-    save_time = start_time = datetime.now()
-    teams = []
-    for comb in itertools.combinations(pk_list,
-                                       team_size - len(roster['team'])):
-        teams = comb_worker(comb, roster, all_types, all_type_chart,
-                            strong_weak_combos, teams)
-        # counter += 1
-        # if counter > 5:
-        #     break
-        if datetime.now() - save_time > timedelta(minutes=10):
-            print('saving strong_weak_combos...')
-            pickle.dump(strong_weak_combos,
-                        open('strong_weak_combos.dat', 'wb'))
-            # strong_weak_combos.sync()
-            save_time = datetime.now()
-
+    print('getting top team combinations...')
+    start_time = datetime.now()
+    teams = get_top_team_combinations(pk_list, roster, all_types,
+                                      all_type_chart)
     print('duration:', datetime.now() - start_time)
 
     # Print teams
     pprint(teams, width=120)
-    # pprint(sorted(teams, reverse=True)[:20], width=120)
-
-    # Save strong_weak_combos
-    print('saving strong_weak_combos...')
-    start_time = datetime.now()
-    pickle.dump(strong_weak_combos,
-                open('strong_weak_combos.dat', 'wb'))
-    print('duration:', datetime.now() - start_time)
 
 
 if __name__ == '__main__':
