@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import copy
 import itertools
 import json
 import math
@@ -8,23 +7,23 @@ import multiprocessing
 import numpy
 import os
 import pickle
-import shelve
 import statistics
 
 from pprint import pprint
-from datetime import datetime, timedelta
+from datetime import datetime
 
 numpy.set_printoptions(linewidth=160)
 
 all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
                     'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO',
                     'DRA', 'DAR', 'STE', 'FAI']
-team_size = 4
+team_size = 5
 trade_evol = True
 mega_evol = False
 has_false_swipe = True
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
+max_queue_size = (worker_count + 1) / 4 * 1000000
 
 
 def read_single_type_chart():
@@ -111,8 +110,8 @@ def get_pk_list(roster):
 def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
     # Initialize workers
     print('initializing teams workers...')
-    team_q = multiprocessing.Queue()
-    teams_q = multiprocessing.Queue()
+    team_q = multiprocessing.Queue(max_queue_size)
+    teams_q = multiprocessing.Queue(max_queue_size)
     workers = []
     for i in range(worker_count):
         p = multiprocessing.Process(target=teams_worker,
@@ -122,7 +121,7 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
         workers.append(p)
 
     # Also start results worker
-    print('stating results worker...')
+    print('starting results worker...')
     p = multiprocessing.Process(target=results_worker,
                                 args=(teams_q,))
     p.start()
@@ -138,6 +137,8 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
         # Add to queue
         team_q.put(team)
         counter += 1
+        if counter % 1000000 == 0:
+            print(str(counter) + '...')
         # if counter >= 100000:
         #     break
     print('counter:', counter)
@@ -321,6 +322,7 @@ def main():
     print('has_false_swipe:', has_false_swipe)
     print('teams_size:', teams_size)
     print('worker_count:', worker_count)
+    print('max_queue_size:', max_queue_size)
 
     print('loading dual type chart...')
     if os.path.isfile('dual_type_chart.dat'):
@@ -353,8 +355,7 @@ def main():
     # Get all team combinations
     print('getting top team combinations...')
     start_time = datetime.now()
-    teams = get_top_team_combinations(pk_list, roster, all_types,
-                                      all_type_chart)
+    get_top_team_combinations(pk_list, roster, all_types, all_type_chart)
     print('duration:', datetime.now() - start_time)
 
 
