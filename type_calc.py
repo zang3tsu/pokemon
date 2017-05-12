@@ -24,6 +24,7 @@ trade_evol = True
 mega_evol = False
 has_false_swipe = True
 teams_size = 20
+worker_count = multiprocessing.cpu_count() - 1
 
 
 def read_single_type_chart():
@@ -108,25 +109,67 @@ def get_pk_list(roster):
 
 
 def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
-    teams = []
+    # Initialize workers
+    print('initializing workers...')
+    team_q = multiprocessing.Queue()
+    teams_q = multiprocessing.Queue()
+    workers = []
+    for i in range(worker_count):
+        p = multiprocessing.Process(target=teams_worker,
+                                    args=(roster, all_types, all_type_chart,
+                                          team_q, teams_q))
+        p.start()
+        workers.append(p)
+
+    # Add combinations to queue
+    print('adding combinations to queue...')
     counter = 0
     for comb in itertools.combinations(pk_list,
                                        team_size - len(roster['team'])):
         # Get team
         team = tuple(sorted(comb + tuple(roster['team'].keys())))
+        # Add to queue
+        team_q.put(team)
+        counter += 1
+    print('counter:', counter)
+    # Add stop code to queue
+    for _ in workers:
+        team_q.put('stop')
+
+    # Consume teams results queue
+    print('consuming teams results queue...')
+    teams = []
+    done_counter = 0
+    while True:
+        team_result = teams_q.get()
+        if team_result == 'done':
+            done_counter += 1
+            if done_counter >= worker_count:
+                break
+        else:
+            teams = append_sorted(teams, team_result)
+
+    # Check if workers have indeed stopped
+    print('checking if workers have indeed stopped...')
+    for p in workers:
+        p.join()
+
+    return teams
+
+
+def teams_worker(roster, all_types, all_type_chart, team_q, teams_q):
+    team = team_q.get()
+    while team != 'stop':
         # Check if team has false swipe
         if ((has_false_swipe and check_if_has_false_swipe(roster, team))
                 or not has_false_swipe):
             # Get team score
             score = get_team_score(team, roster, all_types, all_type_chart)
-            teams = append_sorted(teams, score + (team,))
-            counter += 1
-            if counter % 100000 == 0:
-                print(str(counter) + '...')
-            # if counter >= 100000:
-            #     break
-    print('counter:', counter)
-    return teams
+            # Add result to teams queue
+            teams_q.put(score + (team,))
+        team = team_q.get()
+    # Add done code to teams queue
+    teams_q.put('done')
 
 
 def check_if_has_false_swipe(roster, team):
@@ -264,6 +307,7 @@ def main():
     print('mega_evol:', mega_evol)
     print('has_false_swipe:', has_false_swipe)
     print('teams_size:', teams_size)
+    print('worker_count:', worker_count)
 
     print('loading dual type chart...')
     if os.path.isfile('dual_type_chart.dat'):
@@ -278,6 +322,7 @@ def main():
 
         pickle.dump((all_types, all_type_chart),
                     open('dual_type_chart.dat', 'wb'))
+    print('all_types size:', len(all_types))
 
     # Read pokemon roster
     print('reading pokemon roster...')
