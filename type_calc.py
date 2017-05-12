@@ -24,7 +24,7 @@ trade_evol = True
 mega_evol = False
 has_false_swipe = True
 teams_size = 20
-worker_count = multiprocessing.cpu_count() - 1
+worker_count = multiprocessing.cpu_count() - 2
 
 
 def load_dual_type_chart():
@@ -40,6 +40,14 @@ def load_dual_type_chart():
         pickle.dump((all_types, all_type_chart),
                     open('dual_type_chart.dat', 'wb'))
     return all_types, all_type_chart
+
+
+def load_types_team_dict(types_team_dict):
+    if os.path.isfile(types_team_dict):
+        all_types_team = pickle.load(open(types_team_dict, 'rb'))
+    else:
+        all_types_team = {}
+    return all_types_team
 
 
 def read_single_type_chart():
@@ -123,7 +131,8 @@ def get_pk_list(roster):
     return pk_list
 
 
-def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
+def get_top_team_combinations(pk_list, roster, all_types, all_type_chart,
+                              all_types_team):
     # Initialize workers
     print('initializing workers...')
     team_q = multiprocessing.Queue()
@@ -132,7 +141,7 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
     for i in range(worker_count):
         p = multiprocessing.Process(target=teams_worker,
                                     args=(roster, all_types, all_type_chart,
-                                          team_q, teams_q))
+                                          all_types_team, team_q, teams_q))
         p.start()
         workers.append(p)
 
@@ -146,8 +155,8 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
         # Add to queue
         team_q.put(team)
         counter += 1
-        # if counter >= 100000:
-        #     break
+        if counter >= 1:
+            break
     print('counter:', counter)
     # Add stop code to queue
     for _ in workers:
@@ -174,14 +183,16 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
     return teams
 
 
-def teams_worker(roster, all_types, all_type_chart, team_q, teams_q):
+def teams_worker(roster, all_types, all_type_chart, all_types_team,
+                 team_q, teams_q):
     team = team_q.get()
     while team != 'stop':
         # Check if team has false swipe
         if ((has_false_swipe and check_if_has_false_swipe(roster, team))
                 or not has_false_swipe):
             # Get team score
-            score = get_team_score(team, roster, all_types, all_type_chart)
+            score = get_team_score(team, roster,
+                                   all_types, all_type_chart, all_types_team)
             # Add result to teams queue
             teams_q.put(score + (team,))
         team = team_q.get()
@@ -206,27 +217,50 @@ def check_if_has_false_swipe(roster, team):
     return False
 
 
-def get_team_score(team, roster, all_types, all_type_chart):
+def get_team_score(team, roster, all_types, all_type_chart, all_types_team):
+    # Get types key
+    types_team = get_types_team(team)
 
     # Get normalized base stats geometric mean
     base_stats_gmean = get_base_stats_gmean(team, roster)
 
     # Get weak against score
-    weak_score = get_weak_against_score(team, roster,
-                                        all_types, all_type_chart)
-
+    weak_score, is_wnew = get_weak_against_score(team, types_team,
+                                                 all_types, all_type_chart,
+                                                 all_types_team)
     # Get strong against score
-    strong_score = get_strong_against_score(team, roster,
-                                            all_types, all_type_chart)
-
+    strong_score, is_snew = get_strong_against_score(team, types_team,
+                                                     all_types, all_type_chart,
+                                                     all_types_team)
     # Get geometric mean of all scores
     team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
-                               * math.pow(strong_score, 3)
+                               * math.pow(strong_score, 5)
                                * math.pow(weak_score, 1),
-                               1 / 5)
+                               1 / 7)
                       / 100)
+    # Save types team if new
+    if is_wnew or is_snew:
+        all_types_team[types_team] = {
+            'weak_score': weak_score,
+            'strong_score': strong_score
+        }
 
-    return team_score, base_stats_gmean, strong_score, weak_score
+    return team_score, base_stats_gmean, strong_score, weak_score, types_team
+
+
+def get_types_team(team, roster):
+    types_team = []
+    for pk in team:
+        types = None
+        if pk in roster['team']:
+            types = tuple(sorted(roster['team'][pk]['type'].split('/')))
+        elif pk in roster['all']:
+            types = tuple(sorted(roster['all'][pk]['type'].split('/')))
+        else:
+            print(pk, 'not in either team/all list! Exiting.')
+            exit(1)
+        types_team.append(types)
+    return tuple(sorted(types_team))
 
 
 def pcnt(x):
@@ -251,54 +285,53 @@ def get_base_stats_gmean(team, roster):
     return pcnt(base_stats_gmean)
 
 
-def get_types(roster, pk):
-    types = None
-    if pk in roster['team']:
-        types = tuple(sorted(roster['team'][pk]['type'].split('/')))
-    elif pk in roster['all']:
-        types = tuple(sorted(roster['all'][pk]['type'].split('/')))
+def get_weak_against_score(team, types_team,
+                           all_types, all_type_chart, all_types_team):
+    if (types_team in all_types_team
+            and 'weak_score' in all_types_team['types_team']):
+        weak_score = all_types_team['types_team']['weak_score']
+        is_new = False
     else:
-        print(pk, 'not in either team/all list! Exiting.')
-        exit(1)
-    return types
+        # Get weaknesses
+        weak_combo = None
+        for types in types_team:
+            if weak_combo is None:
+                weak_combo = [all_type_chart[all_types.index(types)]]
+            else:
+                weak_combo = numpy.concatenate(
+                    (weak_combo, [all_type_chart[all_types.index(types)]])
+                )
+        # Get weak score
+        product = numpy.product(weak_combo + 1, axis=0)
+        mean = (numpy.nanmax(product) + numpy.nanmin(product)) / 2
+        weak_score = 1 / mean
+        is_new = True
+
+    return pcnt(weak_score), is_new
 
 
-def get_weak_against_score(team, roster, all_types, all_type_chart):
-    # Get weaknesses
-    weak_combo = None
-    for pk in team:
-        types = get_types(roster, pk)
-        if weak_combo is None:
-            weak_combo = [all_type_chart[all_types.index(types)]]
-        else:
-            weak_combo = numpy.concatenate(
-                (weak_combo, [all_type_chart[all_types.index(types)]])
-            )
-    # Get weak score
-    product = numpy.product(weak_combo + 1, axis=0)
-    mean = (numpy.nanmax(product) + numpy.nanmin(product)) / 2
-    weak_score = 1 / mean
+def get_strong_against_score(team, types_team,
+                             all_types, all_type_chart, all_types_team):
+    if (types_team in all_types_team
+            and 'strong_score' in all_types_team['types_team']):
+        strong_score = all_types_team['types_team']['strong_score']
+        is_new = False
+    else:
+        strong_combo = None
+        for types in types_team:
+            if strong_combo is None:
+                strong_combo = [all_type_chart[all_types.index(types)]]
+            else:
+                strong_combo = numpy.concatenate(
+                    (strong_combo, [
+                     all_type_chart[all_types.index(types)]])
+                )
+        # Get strong score
+        counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
+        strong_score = counter / len(all_types)
+        is_new = True
 
-    return pcnt(weak_score)
-
-
-def get_strong_against_score(team, roster, all_types, all_type_chart):
-    # Get strengths
-    strong_combo = None
-    for pk in team:
-        types = get_types(roster, pk)
-        if strong_combo is None:
-            strong_combo = [all_type_chart[all_types.index(types)]]
-        else:
-            strong_combo = numpy.concatenate(
-                (strong_combo, [
-                 all_type_chart[all_types.index(types)]])
-            )
-    # Get strong score
-    counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
-    strong_score = counter / len(all_types)
-
-    return pcnt(strong_score)
+    return pcnt(strong_score), is_new
 
 
 def append_sorted(aList, a):
@@ -326,9 +359,16 @@ def main():
     print('teams_size:', teams_size)
     print('worker_count:', worker_count)
 
+    # Load dual type chart
     print('loading dual type chart...')
     all_types, all_type_chart = load_dual_type_chart()
     print('all_types size:', len(all_types))
+
+    # Load types team dict
+    types_team_dict = 'types_team.dict'
+    print('loading types team dict...')
+    all_types_team = load_types_team_dict(types_team_dict)
+    print('types_team size:', len(all_types_team))
 
     # Read pokemon roster
     print('reading pokemon roster...')
@@ -344,15 +384,22 @@ def main():
     pk_list = get_pk_list(roster)
     print('pk_list size:', len(pk_list))
 
-    # Get all team combinations
+    # Get top team combinations
     print('getting top team combinations...')
     start_time = datetime.now()
-    teams = get_top_team_combinations(pk_list, roster, all_types,
-                                      all_type_chart)
+    teams = get_top_team_combinations(pk_list, roster,
+                                      all_types, all_type_chart,
+                                      all_types_team)
     print('duration:', datetime.now() - start_time)
 
     # Print teams
     pprint(teams, width=120)
+
+    # Save types team dict
+    print('saving types team dict...')
+    pickle.dump(types_team, open(types_team_dict, 'wb'))
+
+    print('done!')
 
 
 if __name__ == '__main__':
