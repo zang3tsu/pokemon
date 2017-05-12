@@ -27,6 +27,21 @@ teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 
 
+def load_dual_type_chart():
+    if os.path.isfile('dual_type_chart.dat'):
+        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
+                                                     'rb'))
+    else:
+        # Read type chart
+        single_type_chart = read_single_type_chart()
+        # Generate dual type chart
+        all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
+        # Save dual type chart
+        pickle.dump((all_types, all_type_chart),
+                    open('dual_type_chart.dat', 'wb'))
+    return all_types, all_type_chart
+
+
 def read_single_type_chart():
     # cols: attack
     # rows: defense
@@ -312,17 +327,7 @@ def main():
     print('worker_count:', worker_count)
 
     print('loading dual type chart...')
-    if os.path.isfile('dual_type_chart.dat'):
-        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
-                                                     'rb'))
-    else:
-        # Read type chart
-        single_type_chart = read_single_type_chart()
-        # Generate dual type chart
-        all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
-        # Save dual type chart
-        pickle.dump((all_types, all_type_chart),
-                    open('dual_type_chart.dat', 'wb'))
+    all_types, all_type_chart = load_dual_type_chart()
     print('all_types size:', len(all_types))
 
     # Read pokemon roster
