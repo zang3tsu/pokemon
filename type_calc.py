@@ -23,7 +23,7 @@ mega_evol = False
 has_false_swipe = True
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
-max_queue_size = (worker_count + 1) / 4 * 1000000
+max_queue_size = (worker_count + 1) // 4 * 8000000
 
 
 def read_single_type_chart():
@@ -221,7 +221,7 @@ def get_team_score(team, roster, all_types, all_type_chart):
                                1 / 16)
                       / 100)
     score = team_score, base_stats_gmean, strong_score, weak_score
-    if 99 < strong_score <= 100:
+    if 99.5 < strong_score <= 100:
         print(score + (team,))
     return score
 
