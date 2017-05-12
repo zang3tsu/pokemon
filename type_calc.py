@@ -28,7 +28,7 @@ trade_evol = True
 mega_evol = False
 has_false_swipe = True
 teams_size = 20
-worker_count = multiprocessing.cpu_count()
+worker_count = multiprocessing.cpu_count() - 1
 
 
 def load_dual_type_chart():
