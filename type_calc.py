@@ -19,7 +19,7 @@ numpy.set_printoptions(linewidth=160)
 all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
                     'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO',
                     'DRA', 'DAR', 'STE', 'FAI']
-team_size = 5
+team_size = 4
 trade_evol = True
 mega_evol = False
 has_false_swipe = True
@@ -131,6 +131,8 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
         # Add to queue
         team_q.put(team)
         counter += 1
+        # if counter >= 100000:
+        #     break
     print('counter:', counter)
     # Add stop code to queue
     for _ in workers:
@@ -316,10 +318,9 @@ def main():
     else:
         # Read type chart
         single_type_chart = read_single_type_chart()
-
         # Generate dual type chart
         all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
-
+        # Save dual type chart
         pickle.dump((all_types, all_type_chart),
                     open('dual_type_chart.dat', 'wb'))
     print('all_types size:', len(all_types))
