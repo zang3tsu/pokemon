@@ -26,7 +26,7 @@ all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = False
+has_false_swipe = True
 teams_size = 20
 worker_count = multiprocessing.cpu_count()
 
