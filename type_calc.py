@@ -110,7 +110,7 @@ def get_pk_list(roster):
 
 def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
     # Initialize workers
-    print('initializing workers...')
+    print('initializing teams workers...')
     team_q = multiprocessing.Queue()
     teams_q = multiprocessing.Queue()
     workers = []
@@ -120,6 +120,13 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
                                           team_q, teams_q))
         p.start()
         workers.append(p)
+
+    # Also start results worker
+    print('stating results worker...')
+    p = multiprocessing.Process(target=results_worker,
+                                args=(teams_q,))
+    p.start()
+    workers.append(p)
 
     # Add combinations to queue
     print('adding combinations to queue...')
@@ -138,8 +145,13 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
     for _ in workers:
         team_q.put('stop')
 
-    # Consume teams results queue
-    print('consuming teams results queue...')
+    # Check if workers have indeed stopped
+    print('checking if workers have indeed stopped...')
+    for p in workers:
+        p.join()
+
+
+def results_worker(teams_q):
     teams = []
     done_counter = 0
     while True:
@@ -151,12 +163,9 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
         else:
             teams = append_sorted(teams, team_result)
 
-    # Check if workers have indeed stopped
-    print('checking if workers have indeed stopped...')
-    for p in workers:
-        p.join()
-
-    return teams
+    # Print teams
+    print('\nTop teams:')
+    pprint(teams, width=120)
 
 
 def teams_worker(roster, all_types, all_type_chart, team_q, teams_q):
@@ -206,12 +215,14 @@ def get_team_score(team, roster, all_types, all_type_chart):
 
     # Get geometric mean of all scores
     team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
-                               * math.pow(strong_score, 3)
+                               * math.pow(strong_score, 14)
                                * math.pow(weak_score, 1),
-                               1 / 5)
+                               1 / 16)
                       / 100)
-
-    return team_score, base_stats_gmean, strong_score, weak_score
+    score = team_score, base_stats_gmean, strong_score, weak_score
+    if 99 < strong_score <= 100:
+        print(score + (team,))
+    return score
 
 
 def pcnt(x):
@@ -345,9 +356,6 @@ def main():
     teams = get_top_team_combinations(pk_list, roster, all_types,
                                       all_type_chart)
     print('duration:', datetime.now() - start_time)
-
-    # Print teams
-    pprint(teams, width=120)
 
 
 if __name__ == '__main__':
