@@ -24,7 +24,7 @@ all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 
@@ -134,13 +134,13 @@ def get_pk_list(roster):
 
 
 def get_top_team_combinations(pk_list, roster, all_types, all_type_chart,
-                              all_types_team):
+                              all_types_team_):
     # Initialize workers
     print('initializing workers...')
-    # team_q = multiprocessing.Queue()
-    # teams_q = multiprocessing.Queue()
-    team_q = queue.Queue()
-    teams_q = queue.Queue()
+    manager = multiprocessing.Manager()
+    team_q = manager.Queue()
+    teams_q = manager.Queue()
+    all_types_team = manager.dict(all_types_team_)
     workers = []
     for i in range(worker_count):
         p = threading.Thread(target=teams_worker,
@@ -159,8 +159,8 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart,
         # Add to queue
         team_q.put(team)
         counter += 1
-        # if counter >= 100000:
-        #     break
+        if counter >= 100000:
+            break
     print('counter:', counter)
     # Add stop code to queue
     for _ in workers:
@@ -186,7 +186,7 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart,
 
     # print('C: all_types_team size:', len(all_types_team))
 
-    return teams
+    return teams, all_types_team
 
 
 def teams_worker(roster, all_types, all_type_chart, all_types_team,
@@ -242,9 +242,9 @@ def get_team_score(team, roster, all_types, all_type_chart, all_types_team):
     # print('strong_score:', strong_score)
     # Get geometric mean of all scores
     team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
-                               * math.pow(strong_score, 20)
+                               * math.pow(strong_score, 15)
                                * math.pow(weak_score, 1),
-                               1 / 22)
+                               1 / 17)
                       / 100)
     # Save types team if new
     if is_wnew or is_snew:
@@ -254,8 +254,10 @@ def get_team_score(team, roster, all_types, all_type_chart, all_types_team):
             'strong_score': strong_score
         }
         # print('B: all_types_team size:', len(all_types_team))
-
-    return team_score, base_stats_gmean, strong_score, weak_score, types_team
+    score = team_score, base_stats_gmean, strong_score, weak_score, types_team
+    if 99 < strong_score <= 100:
+        print(score + (team,))
+    return score
 
 
 def get_types_team(team, roster):
@@ -397,10 +399,10 @@ def main():
     # Get top team combinations
     print('getting top team combinations...')
     start_time = datetime.now()
-    teams = get_top_team_combinations(pk_list, roster,
-                                      all_types,
-                                      all_type_chart,
-                                      all_types_team)
+    teams, all_types_team = get_top_team_combinations(pk_list, roster,
+                                                      all_types,
+                                                      all_type_chart,
+                                                      all_types_team)
     print('duration:', datetime.now() - start_time)
     print('all_types_team size:', len(all_types_team))
 
@@ -409,7 +411,7 @@ def main():
 
     # Save types team dict
     print('saving types team dict...')
-    pickle.dump(all_types_team, open(types_team_dict, 'wb'))
+    pickle.dump(all_types_team._getvalue(), open(types_team_dict, 'wb'))
 
     print('done!')
 
