@@ -15,7 +15,7 @@ import traceback
 
 from pprint import pprint
 from datetime import datetime, timedelta
-from models import connect_db, close_db, Roster, Teams, DB, normalize
+from models import connect_db, close_db, Roster, TypesTeams, normalize
 from peewee import fn
 
 numpy.set_printoptions(linewidth=160)
@@ -29,6 +29,21 @@ mega_evol = False
 has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count()
+
+
+def load_dual_type_chart():
+    if os.path.isfile('dual_type_chart.dat'):
+        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
+                                                     'rb'))
+    else:
+        # Read type chart
+        single_type_chart = read_single_type_chart()
+        # Generate dual type chart
+        all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
+        # Save dual type chart
+        pickle.dump((all_types, all_type_chart),
+                    open('dual_type_chart.dat', 'wb'))
+    return all_types, all_type_chart
 
 
 def read_single_type_chart():
@@ -130,11 +145,11 @@ def load_roster_to_db(roster):
 def normalize_base_stats():
     connect_db()
     # Get mean and stdev
-    mean = Roster.select(fn.avg(Roster.base_stats)).scalar()
+    mean = float(Roster.select(fn.avg(Roster.base_stats)).scalar())
     # print('mean:', mean)
     q = Roster.select(Roster.base_stats)
     all_base_stats = [pk.base_stats for pk in q.execute()]
-    stdev = statistics.stdev(all_base_stats, mean)
+    stdev = float(statistics.stdev(all_base_stats, mean))
     # print('stdev:', stdev)
     # exit(1)
 
@@ -178,97 +193,129 @@ def get_pk_list(start_team):
     return pk_list
 
 
-def comb_worker(comb_q, start_team,
-                all_types, all_type_chart):
-    connect_db()
-    # DB.start()
-    comb = comb_q.get()
-    while comb != 'stop':
+def get_top_team_combinations(start_team, start_team_size, pk_list,
+                              all_types, all_type_chart):
+    # Initialize workers
+    print('initializing workers...')
+    team_q = multiprocessing.Queue()
+    teams_q = multiprocessing.Queue()
+    workers = []
+    for i in range(worker_count):
+        p = multiprocessing.Process(target=teams_worker,
+                                    args=(all_types, all_type_chart,
+                                          team_q, teams_q))
+        p.start()
+        workers.append(p)
 
+    # Add combinations to queue
+    print('adding combinations to queue...')
+    counter = 0
+    for comb in itertools.combinations(pk_list,
+                                       team_size - start_team_size):
+        # Get team
         team = tuple(sorted(comb + start_team))
+        # Add to queue
+        team_q.put(team)
+        counter += 1
+        # if counter >= 100000:
+        #     break
+    print('counter:', counter)
+    # Add stop code to queue
+    for _ in workers:
+        team_q.put('stop')
 
-        if check_if_has_false_swipe(team):
+    # Consume teams results queue
+    print('consuming teams results queue...')
+    teams = []
+    done_counter = 0
+    while True:
+        team_result = teams_q.get()
+        if team_result == 'done':
+            done_counter += 1
+            if done_counter >= worker_count:
+                break
+        else:
+            teams = append_sorted(teams, team_result)
 
-            team_key, score = get_team_score(team, all_types, all_type_chart)
+    # Check if workers have indeed stopped
+    print('checking if workers have indeed stopped...')
+    for p in workers:
+        p.join()
 
-            # while True:
-            #     try:
-            #         with DB.atomic():
-            try:
-                # Update team info
-                team_db = Teams.get(team=team_key)
-                team_db.base_stats_gmean = score[
-                    'base_stats_gmean']
-                team_db.weak_score = score['weak_score']
-                team_db.strong_score = score['strong_score']
-                team_db.team_score = score['team_score']
-                team_db.save()
-            except Teams.DoesNotExist:
-                # Create team
-                Teams.create(team=team_key,
-                             base_stats_gmean=score[
-                                 'base_stats_gmean'],
-                             weak_score=score['weak_score'],
-                             strong_score=score['strong_score'],
-                             team_score=score['team_score'])
-                #     break
-                # except apsw.BusyError:
-                #     delay = random.randint(0, 1000) / 1000
-                #     # print('BusyError! Sleeping for', delay, 's')
-                #     time.sleep(delay)
+    return teams
 
-        comb = comb_q.get()
-    # DB.stop()
+
+def teams_worker(all_types, all_type_chart, team_q, teams_q):
+    connect_db()
+    team = team_q.get()
+    while team != 'stop':
+        # Check if team has false swipe
+        if ((has_false_swipe and check_if_has_false_swipe(team))
+                or not has_false_swipe):
+            # Get team score
+            score = get_team_score(team, all_types, all_type_chart)
+            # Add result to teams queue
+            teams_q.put(score + (team,))
+        team = team_q.get()
     close_db()
+    # Add done code to teams queue
+    teams_q.put('done')
 
 
 def check_if_has_false_swipe(team):
-    if not has_false_swipe:
-        # false swipe not needed
-        return True
-    else:
-        q = Roster.select().where(Roster.name << team)
-        for pk in q.execute():
-            if pk.has_false_swipe:
-                return True
-        # No false swipe in team
-        return False
+    q = Roster.select().where(Roster.name << team)
+    for pk in q.execute():
+        if pk.has_false_swipe:
+            return True
+    # No false swipe in team
+    return False
 
 
 def get_team_score(team, all_types, all_type_chart):
-
     # Get team score
-    team_key = ','.join(team).replace(' ', '')
-    # print('team_key:', team_key)
 
+    # Get types key
+    types_team = get_types_team(team)
     # Get normalized base stats geometric mean
     base_stats_gmean = get_base_stats_gmean(team)
-    # print('base_stats_gmean:', base_stats_gmean)
-
-    # # Get weak against score
-    weak_score = get_weak_against_score(team, team_key,
-                                        all_types, all_type_chart)
-    # print('weak_score:', weak_score)
-
+    # Get weak against score
+    is_new = False
+    weak_score, is_wnew = get_weak_against_score(team, types_team,
+                                                 all_types, all_type_chart)
+    is_new = is_new or is_wnew
     # Get strong against score
-    strong_score = get_strong_against_score(team, team_key,
-                                            all_types, all_type_chart)
-    # print('strong_score:', strong_score)
-
+    strong_score, is_snew = get_strong_against_score(team, types_team,
+                                                     all_types, all_type_chart)
+    is_new = is_new or is_snew
     # Get geometric mean of all scores
     ts = math.pow(math.pow(base_stats_gmean, 1)
                   * math.pow(strong_score, 4)
                   * math.pow(weak_score, 1),
                   1 / 6)
     team_score = float('%.2f' % ts)
-    # print('team_score:', team_score)
+    # Save types_team to db if new
+    if is_new:
+        TypesTeams.create(types_team=str(types_team),
+                          weak_score=weak_score,
+                          strong_score=strong_score)
+    score = (team_score,
+             base_stats_gmean,
+             strong_score,
+             weak_score,
+             types_team)
 
-    score = {'team_score': team_score,
-             'base_stats_gmean': base_stats_gmean,
-             'weak_score': weak_score,
-             'strong_score': strong_score}
+    return score
 
-    return team_key, score
+
+def get_types_team(team):
+    types_team = []
+    q = Roster.select().where(Roster.name << team)
+    for pk in q.execute():
+        types = (pk.type1,)
+        if pk.type2:
+            types += (pk.type2,)
+        types_team.append(types)
+    return tuple(sorted(types_team))
 
 
 def pcnt(x):
@@ -290,19 +337,16 @@ def get_base_stats_gmean(team):
     return base_stats_gmean
 
 
-def get_weak_against_score(team, team_key, all_types, all_type_chart):
+def get_weak_against_score(team, types_team, all_types, all_type_chart):
     # Get weak against score
     try:
-        team_db = Teams.get(team=team_key)
-        weak_score = team_db.weak_score
-    except Teams.DoesNotExist:
+        types_team_db = TypesTeams.get(types_team=str(types_team))
+        weak_score = types_team_db.weak_score
+        is_new = False
+    except TypesTeams.DoesNotExist:
         # Get weak against array
         weak_combo = None
-        q = Roster.select().where(Roster.name << team)
-        for pk in q.execute():
-            types = (pk.type1,)
-            if pk.type2:
-                types += (pk.type2,)
+        for types in types_team:
             if weak_combo is None:
                 weak_combo = [all_type_chart[all_types.index(types)]]
             else:
@@ -314,23 +358,22 @@ def get_weak_against_score(team, team_key, all_types, all_type_chart):
         mean = statistics.mean([numpy.nanmax(product), numpy.nanmin(product)])
         ws = 1 / mean
         weak_score = pcnt(ws)
+        # Set is_new flag
+        is_new = True
 
-    return weak_score
+    return weak_score, is_new
 
 
-def get_strong_against_score(team, team_key, all_types, all_type_chart):
+def get_strong_against_score(team, types_team, all_types, all_type_chart):
     # Get strong against score
     try:
-        team_db = Teams.get(team=team_key)
-        strong_score = team_db.strong_score
-    except Teams.DoesNotExist:
+        types_team_db = TypesTeams.get(types_team=str(types_team))
+        strong_score = types_team_db.strong_score
+        is_new = False
+    except TypesTeams.DoesNotExist:
         # Get strong against array
         strong_combo = None
-        q = Roster.select().where(Roster.name << team)
-        for pk in q.execute():
-            types = (pk.type1,)
-            if pk.type2:
-                types += (pk.type2,)
+        for types in types_team:
             if strong_combo is None:
                 strong_combo = [all_type_chart[all_types.index(types)]]
             else:
@@ -342,8 +385,26 @@ def get_strong_against_score(team, team_key, all_types, all_type_chart):
         counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
         ss = counter / len(all_types)
         strong_score = pcnt(ss)
+        # Set is_new flag
+        is_new = True
 
-    return strong_score
+    return strong_score, is_new
+
+
+def append_sorted(aList, a):
+    did_break = False
+    for i in range(len(aList)):
+        if a > aList[i]:
+            did_break = True
+            break
+    if did_break:
+        aList.insert(i, a)
+    else:
+        aList.append(a)
+    if len(aList) > teams_size:
+        # aList = aList[:teams_size]
+        aList.pop()
+    return aList
 
 
 def main():
@@ -356,22 +417,8 @@ def main():
     print('worker_count:', worker_count)
 
     print('loading dual type chart...')
-    if os.path.isfile('dual_type_chart.dat'):
-        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
-                                                     'rb'))
-    else:
-        # Read type chart
-        single_type_chart = read_single_type_chart()
-
-        # Generate dual type chart
-        all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
-
-        pickle.dump((all_types, all_type_chart),
-                    open('dual_type_chart.dat', 'wb'))
-
-    # Connect to db
-    # print('connecting to db...')
-    # connect_db()
+    all_types, all_type_chart = load_dual_type_chart()
+    print('all_types size:', len(all_types))
 
     # Read roster and load to db
     print('reading roster and loading to db...')
@@ -392,59 +439,15 @@ def main():
     pk_list = get_pk_list(roster['team'].keys())
     print('pk_list size:', len(pk_list))
 
-    # Initialize workers
-    print('initializing workers...')
-    comb_q = multiprocessing.Queue()
-    workers = []
-    for i in range(worker_count):
-        p = multiprocessing.Process(target=comb_worker,
-                                    args=(comb_q, start_team,
-                                          all_types, all_type_chart))
-        p.start()
-        workers.append(p)
-
     # Get all team combinations
-    print('getting all team combinations...')
+    print('getting top team combinations...')
     start_time = datetime.now()
-    counter = 0
-    for comb in itertools.combinations(pk_list, team_size - start_team_size):
-        comb_q.put(comb)
-        counter += 1
-    # if counter >= 100000:
-    #     break
-    print('counter:', counter)
-
-    # Send terminate code
-    print('sending terminate code...')
-    for w in workers:
-        comb_q.put('stop')
-
-    # Check if workers have stopped
-    print('checking if workers have stopped...')
-    for p in workers:
-        p.join()
+    teams = get_top_team_combinations(start_team, start_team_size, pk_list,
+                                      all_types, all_type_chart)
     print('duration:', datetime.now() - start_time)
 
     # Print teams
-    print('#' * 40)
-    connect_db()
-    q = (Teams
-         .select()
-         .order_by(Teams.team_score.desc())
-         .limit(teams_size))
-    print('team_score,base_stats_gmean,strong_score,weak_score,team')
-    for team_db in q.execute():
-        print([team_db.team_score,
-               team_db.base_stats_gmean,
-               team_db.strong_score,
-               team_db.weak_score,
-               team_db.team])
-    close_db()
-    print('#' * 40)
-
-    # Close db connection
-    # print('closing db connection...')
-    # close_db()
+    pprint(teams, width=200)
 
 
 if __name__ == '__main__':

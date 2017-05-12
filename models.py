@@ -75,12 +75,10 @@ class Roster(BaseModel):
     trade_evol = peewee.BooleanField(default=False)
 
 
-class Teams(BaseModel):
-    team = peewee.CharField(primary_key=True)
-    base_stats_gmean = peewee.FloatField()
+class TypesTeams(BaseModel):
+    types_team = peewee.CharField(primary_key=True)
     weak_score = peewee.FloatField()
     strong_score = peewee.FloatField()
-    team_score = peewee.FloatField()
 
 
 def connect_db():
@@ -88,7 +86,7 @@ def connect_db():
     DB.connect()
     # DB.load_extension('/mnt/store02/pokemon/libsqlitefunctions')
     DB.start()
-    DB.create_tables([Roster, Teams], safe=True)
+    DB.create_tables([Roster, TypesTeams], safe=True)
 
 
 def close_db():
