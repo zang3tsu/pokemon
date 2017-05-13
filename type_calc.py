@@ -12,15 +12,10 @@ import statistics
 from pprint import pprint
 from datetime import datetime
 
-numpy.set_printoptions(linewidth=160)
-
-all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
-                    'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO',
-                    'DRA', 'DAR', 'STE', 'FAI']
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
@@ -31,6 +26,39 @@ weights = {
     'weak_score': 1,
 }
 weights['sum'] = sum([v for v in weights.values()])
+
+numpy.set_printoptions(linewidth=160)
+
+all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
+                    'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO',
+                    'DRA', 'DAR', 'STE', 'FAI']
+unused_types = [tuple(sorted(i)) for i in [
+    ('NOR', 'ICE'),
+    ('NOR', 'POI'),
+    ('NOR', 'BUG'),
+    ('NOR', 'ROC'),
+    ('NOR', 'GHO'),
+    ('NOR', 'STE'),
+    ('FIR', 'GRA'),
+    ('FIR', 'ICE'),
+    ('FIR', 'FAI'),
+    ('ELE', 'FIG'),
+    ('ELE', 'POI'),
+    ('ELE', 'DAR'),
+    ('ICE', 'POI'),
+    ('ICE', 'BUG'),
+    ('FIG', 'GRO'),
+    ('FIG', 'FAI'),
+    ('POI', 'PSY'),
+    ('POI', 'STE'),
+    ('POI', 'FAI'),
+    ('GRO', 'FAI'),
+    ('PSY', 'BUG'),
+    ('BUG', 'DRA'),
+    ('BUG', 'DAR'),
+    ('ROC', 'GHO'),
+    ('DAR', 'FAI')
+]]
 
 
 def read_single_type_chart():
@@ -53,7 +81,9 @@ def generate_dual_type_chart(single_type_chart):
     for t in all_single_types:
         all_types.append(tuple([t]))
     for i in itertools.combinations(all_single_types, 2):
-        all_types.append(tuple(sorted(i)))
+        types = tuple(sorted(i))
+        if types not in unused_types:
+            all_types.append(types)
 
     # Extend single type chart horizontally
     all_type_chart = single_type_chart.copy()
