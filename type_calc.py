@@ -17,13 +17,20 @@ numpy.set_printoptions(linewidth=160)
 all_single_types = ['NOR', 'FIR', 'WAT', 'ELE', 'GRA', 'ICE', 'FIG',
                     'POI', 'GRO', 'FLY', 'PSY', 'BUG', 'ROC', 'GHO',
                     'DRA', 'DAR', 'STE', 'FAI']
-team_size = 5
+team_size = 4
 trade_evol = True
 mega_evol = False
 has_false_swipe = True
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
+weights = {
+    'base_stats_gmean': 1,
+    # 'strong_score': 14,
+    'strong_score': 32,
+    'weak_score': 1,
+}
+weights['sum'] = sum([v for v in weights.values()])
 
 
 def read_single_type_chart():
@@ -215,13 +222,16 @@ def get_team_score(team, roster, all_types, all_type_chart):
                                             all_types, all_type_chart)
 
     # Get geometric mean of all scores
-    team_score = pcnt(math.pow(math.pow(base_stats_gmean, 1)
-                               * math.pow(strong_score, 14)
-                               * math.pow(weak_score, 1),
-                               1 / 16)
+    team_score = pcnt(math.pow(math.pow(base_stats_gmean,
+                                        weights['base_stats_gmean'])
+                               * math.pow(strong_score,
+                                          weights['strong_score'])
+                               * math.pow(weak_score,
+                                          weights['weak_score']),
+                               1 / weights['sum'])
                       / 100)
     score = team_score, base_stats_gmean, strong_score, weak_score
-    if 99.5 < strong_score <= 100:
+    if 99 < strong_score <= 100:
         print(score + (team,))
     return score
 
@@ -282,19 +292,26 @@ def get_weak_against_score(team, roster, all_types, all_type_chart):
 def get_strong_against_score(team, roster, all_types, all_type_chart):
     # Get strengths
     strong_combo = None
+    types_team = []
     for pk in team:
         types = get_types(roster, pk)
+        types_team.append(types)
         if strong_combo is None:
-            strong_combo = [all_type_chart[all_types.index(types)]]
+            strong_combo = [all_type_chart.T[all_types.index(types)]]
         else:
             strong_combo = numpy.concatenate(
-                (strong_combo, [
-                 all_type_chart[all_types.index(types)]])
+                (strong_combo, [all_type_chart.T[all_types.index(types)]])
             )
     # Get strong score
     counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
     strong_score = counter / len(all_types)
-
+    # if .99 < strong_score <= 1.:
+    #     print('team:', team)
+    #     print('types_team:', types_team)
+    #     print('strong_combo:\n', strong_combo)
+    #     print('counter:', counter)
+    #     print('all_types:', len(all_types))
+    #     exit(1)
     return pcnt(strong_score)
 
 
@@ -323,6 +340,7 @@ def main():
     print('teams_size:', teams_size)
     print('worker_count:', worker_count)
     print('max_queue_size:', max_queue_size)
+    print('weights:', weights)
 
     print('loading dual type chart...')
     if os.path.isfile('dual_type_chart.dat'):

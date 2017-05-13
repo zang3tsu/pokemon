@@ -204,6 +204,10 @@
       "base_stats": 405,
       "type": "GHO/POI"
     },
+    "Honchkrow": {
+      "base_stats": 505,
+      "type": "DAR/FLY"
+    },
     "Hydreigon": {
       "base_stats": 600,
       "type": "DAR/DRA"
@@ -257,7 +261,7 @@
       "has_false_swipe": true,
       "type": "GRA"
     },
-    " ray": {
+    "Luxray": {
       "base_stats": 523,
       "type": "ELE"
     },
@@ -579,14 +583,6 @@
     "Wishiwashi (Solo Form)": {
       "base_stats": 175,
       "type": "WAT"
-    },
-    "Honchkrow": {
-      "base_stats": 505,
-      "type": "DAR/FLY"
-    },
-    "Azumarill": {
-      "base_stats": 420,
-      "type": "WAT/FAI"
     }
   },
   "team": {}
