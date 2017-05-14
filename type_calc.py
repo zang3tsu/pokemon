@@ -15,15 +15,15 @@ from datetime import datetime
 team_size = 4
 trade_evol = True
 mega_evol = False
-has_false_swipe = False
+has_false_swipe = True
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
 weights = {
-    'base_stats_gmean': 1,
+    'base_stats_gmean': 1 / 2,
     # 'strong_score': 14,
-    'strong_score': 32,
-    'weak_score': 1,
+    'strong_score': 128,
+    'weak_score': 1 / 2,
 }
 weights['sum'] = sum([v for v in weights.values()])
 
