@@ -61,6 +61,21 @@ unused_types = [tuple(sorted(i)) for i in [
 ]]
 
 
+def load_dual_type_chart():
+    if os.path.isfile('dual_type_chart.dat'):
+        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
+                                                     'rb'))
+    else:
+        # Read type chart
+        single_type_chart = read_single_type_chart()
+        # Generate dual type chart
+        all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
+        # Save dual type chart
+        pickle.dump((all_types, all_type_chart),
+                    open('dual_type_chart.dat', 'wb'))
+    return all_types, all_type_chart
+
+
 def read_single_type_chart():
     # cols: attack
     # rows: defense
@@ -321,20 +336,11 @@ def get_weak_against_score(team, roster, all_types, all_type_chart):
 
 def get_strong_against_score(team, roster, all_types, all_type_chart):
     # Get strengths
-    strong_combo = None
     types_team = []
     for pk in team:
         types = get_types(roster, pk)
         types_team.append(types)
-        if strong_combo is None:
-            strong_combo = [all_type_chart.T[all_types.index(types)]]
-        else:
-            strong_combo = numpy.concatenate(
-                (strong_combo, [all_type_chart.T[all_types.index(types)]])
-            )
-    # Get strong score
-    counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
-    strong_score = counter / len(all_types)
+    strong_score = get_strong_score(types_team, all_types, all_type_chart)
     # if .99 < strong_score <= 1.:
     #     print('team:', team)
     #     print('types_team:', types_team)
@@ -342,6 +348,25 @@ def get_strong_against_score(team, roster, all_types, all_type_chart):
     #     print('counter:', counter)
     #     print('all_types:', len(all_types))
     #     exit(1)
+    return pcnt(strong_score)
+
+
+def get_strong_score(types_team, all_types, all_type_chart,
+                     super_effective_only=True):
+    strong_combo = None
+    for types in types_team:
+        if strong_combo is None:
+            strong_combo = [all_type_chart.T[all_types.index(types)]]
+        else:
+            strong_combo = numpy.concatenate(
+                (strong_combo, [all_type_chart.T[all_types.index(types)]])
+            )
+    # Get strong score
+    if super_effective_only:
+        counter = numpy.count_nonzero(numpy.any(strong_combo > 1, axis=0))
+    else:
+        counter = numpy.count_nonzero(numpy.any(strong_combo >= 1, axis=0))
+    strong_score = counter / len(all_types)
     return pcnt(strong_score)
 
 
@@ -373,17 +398,7 @@ def main():
     print('weights:', weights)
 
     print('loading dual type chart...')
-    if os.path.isfile('dual_type_chart.dat'):
-        all_types, all_type_chart = pickle.load(open('dual_type_chart.dat',
-                                                     'rb'))
-    else:
-        # Read type chart
-        single_type_chart = read_single_type_chart()
-        # Generate dual type chart
-        all_types, all_type_chart = generate_dual_type_chart(single_type_chart)
-        # Save dual type chart
-        pickle.dump((all_types, all_type_chart),
-                    open('dual_type_chart.dat', 'wb'))
+    all_types, all_type_chart = load_dual_type_chart()
     print('all_types size:', len(all_types))
 
     # Read pokemon roster
