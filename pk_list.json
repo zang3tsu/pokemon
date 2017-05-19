@@ -99,9 +99,17 @@
       "base_stats": 520,
       "type": "GHO/FIR"
     },
+    "Cloyster": {
+      "base_stats": 525,
+      "type": "WAT/ICE"
+    },
     "Comfey": {
       "base_stats": 485,
       "type": "FAI"
+    },
+    "Corsola": {
+      "base_stats": 410,
+      "type": "WAT/ROC"
     },
     "Crabominable": {
       "base_stats": 478,
@@ -116,9 +124,21 @@
       "has_false_swipe": true,
       "type": "GRA/GHO"
     },
+    "Delibird": {
+      "base_stats": 330,
+      "type": "ICE/FLY"
+    },
     "Drifblim": {
       "base_stats": 498,
       "type": "GHO/FLY"
+    },
+    "Electabuzz": {
+      "base_stats": 490,
+      "type": "ELE"
+    },
+    "Electivire": {
+      "base_stats": 540,
+      "type": "ELE"
     },
     "Espeon": {
       "base_stats": 525,
@@ -184,6 +204,10 @@
       "base_stats": 405,
       "type": "GHO/POI"
     },
+    "Honchkrow": {
+      "base_stats": 505,
+      "type": "DAR/FLY"
+    },
     "Hydreigon": {
       "base_stats": 600,
       "type": "DAR/DRA"
@@ -191,6 +215,10 @@
     "Hypno": {
       "base_stats": 483,
       "type": "PSY"
+    },
+    "Incineroar": {
+      "base_stats": 530,
+      "type": "FIR/DAR"
     },
     "Jolteon": {
       "base_stats": 525,
@@ -378,6 +406,10 @@
       "base_stats": 440,
       "type": "WAT/FLY"
     },
+    "Pikachu": {
+      "base_stats": 320,
+      "type": "ELE"
+    },
     "Pinsir": {
       "base_stats": 500,
       "has_false_swipe": true,
@@ -390,6 +422,10 @@
     "Poliwrath": {
       "base_stats": 510,
       "type": "WAT/FIG"
+    },
+    "Primarina": {
+      "base_stats": 530,
+      "type": "WAT/FAI"
     },
     "Primeape": {
       "base_stats": 455,
@@ -487,6 +523,10 @@
     "Tentacruel": {
       "base_stats": 515,
       "type": "WAT/POI"
+    },
+    "Togedemaru": {
+      "base_stats": 435,
+      "type": "ELE/STE"
     },
     "Toucannon": {
       "base_stats": 485,
