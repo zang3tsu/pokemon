@@ -7,16 +7,17 @@ from pprint import pprint
 from team_type_calc import load_dual_type_chart, get_strong_score
 
 stab_move_types = tuple([tuple([i]) for i in [
-    'GHO', 'GRO'
+    'DRA', 'FLY'
 ]])
 move_types = [tuple([i]) for i in [
-    'GRA', 'ROC', 'PSY', 'POI', 'NOR', 'BUG'
+    'DAR', 'PSY', 'FIR'
 ]]
 slots = 4
 
 
 def main():
 
+    print('stab_move_types:', stab_move_types)
     print('move_types:', move_types)
 
     print('loading dual type chart...')
