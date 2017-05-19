@@ -12,7 +12,7 @@ import statistics
 from pprint import pprint
 from datetime import datetime
 
-team_size = 4
+team_size = 3
 trade_evol = True
 mega_evol = False
 has_false_swipe = True
@@ -20,10 +20,10 @@ teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
 weights = {
-    'base_stats_gmean': 1 / 2,
+    'base_stats_gmean': 1 / 4,
     # 'strong_score': 14,
-    'strong_score': 128,
-    'weak_score': 1 / 2,
+    'strong_score': 64,
+    'weak_score': 1 / 4,
 }
 weights['sum'] = sum([v for v in weights.values()])
 
@@ -348,7 +348,7 @@ def get_strong_against_score(team, roster, all_types, all_type_chart):
     #     print('counter:', counter)
     #     print('all_types:', len(all_types))
     #     exit(1)
-    return pcnt(strong_score)
+    return strong_score
 
 
 def get_strong_score(types_team, all_types, all_type_chart,
