@@ -15,7 +15,7 @@ from datetime import datetime
 team_size = 3
 trade_evol = True
 mega_evol = True
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
