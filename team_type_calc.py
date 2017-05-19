@@ -14,7 +14,7 @@ from datetime import datetime
 
 team_size = 3
 trade_evol = True
-mega_evol = False
+mega_evol = True
 has_false_swipe = True
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1

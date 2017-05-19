@@ -583,6 +583,68 @@
     "Wishiwashi (Solo Form)": {
       "base_stats": 175,
       "type": "WAT"
+    },
+    "Celesteela": {
+      "base_stats": 570,
+      "type": "STE/FLY"
+    },
+    "Xurkitree": {
+      "base_stats": 570,
+      "type": "ELE"
+    },
+    "Tapu Koko": {
+      "base_stats": 570,
+      "type": "ELE/FAI"
+    },
+    "Nihilego": {
+      "base_stats": 570,
+      "type": "ROC/POI"
+    },
+    "Dragonite": {
+      "base_stats": 600,
+      "type": "DRA/FLY"
+    },
+    "Sandslash": {
+      "base_stats": 450,
+      "type": "ICE/STE"
+    },
+    "Pheromosa": {
+      "base_stats": 570,
+      "type": "BUG/FIG"
+    },
+    "Guzzlord": {
+      "base_stats": 570,
+      "type": "DAR/DRA"
+    },
+    "Tapu Fini": {
+      "base_stats": 570,
+      "type": "WAT/FAI"
+    },
+    "Tapu Lele": {
+      "base_stats": 570,
+      "type": "PSY/FAI"
+    },
+    "Tapu Bulu": {
+      "base_stats": 570,
+      "type": "GRA/FAI"
+    },
+    "Scizor": {
+      "base_stats": 500,
+      "type": "BUG/STE"
+    },
+    "Mega Scizor": {
+      "base_stats": 600,
+      "has_false_swipe": true,
+      "mega_evol": true,
+      "type": "BUG/STE"
+    },
+    "Exeggutor": {
+      "base_stats": 530,
+      "type": "GRA/DRA"
+    },
+    "Klefki": {
+      "base_stats": 470,
+      "type": "STE/FAI"
     }
   },
   "team": {}
