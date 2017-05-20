@@ -14,6 +14,11 @@
       "base_stats": 425,
       "type": "GRO/STE"
     },
+    "Alolan Golem": {
+      "base_stats": 495,
+      "trade_evol": true,
+      "type": "ROC/ELE"
+    },
     "Alolan Marowak": {
       "base_stats": 425,
       "has_false_swipe": true,
@@ -22,6 +27,10 @@
     "Alolan Muk": {
       "base_stats": 500,
       "type": "POI/DAR"
+    },
+    "Alolan Ninetales": {
+      "base_stats": 505,
+      "type": "ICE/FAI"
     },
     "Alolan Persian": {
       "base_stats": 440,
@@ -34,6 +43,10 @@
     "Alolan Raticate": {
       "base_stats": 413,
       "type": "DAR/NOR"
+    },
+    "Alolan Sandslash": {
+      "base_stats": 450,
+      "type": "ICE/STE"
     },
     "Alomomola": {
       "base_stats": 470,
@@ -79,6 +92,10 @@
       "base_stats": 510,
       "type": "NOR/FLY"
     },
+    "Bruxish": {
+      "base_stats": 475,
+      "type": "WAT/PSY"
+    },
     "Butterfree": {
       "base_stats": 395,
       "type": "BUG/FLY"
@@ -98,6 +115,10 @@
     "Chandelure": {
       "base_stats": 520,
       "type": "GHO/FIR"
+    },
+    "Clefable": {
+      "base_stats": 483,
+      "type": "FAI"
     },
     "Cloyster": {
       "base_stats": 525,
@@ -128,6 +149,10 @@
       "base_stats": 330,
       "type": "ICE/FLY"
     },
+    "Dragonite": {
+      "base_stats": 600,
+      "type": "DRA/FLY"
+    },
     "Drifblim": {
       "base_stats": 498,
       "type": "GHO/FLY"
@@ -138,6 +163,7 @@
     },
     "Electivire": {
       "base_stats": 540,
+      "trade_evol_w_item": true,
       "type": "ELE"
     },
     "Espeon": {
@@ -157,6 +183,22 @@
       "base_stats": 525,
       "type": "FIR"
     },
+    "Flygon": {
+      "base_stats": 520,
+      "type": "GRO/DRA"
+    },
+    "Froslass": {
+      "base_stats": 480,
+      "type": "ICE/GHO"
+    },
+    "Garbodor": {
+      "base_stats": 474,
+      "type": "POI"
+    },
+    "Garchomp": {
+      "base_stats": 600,
+      "type": "DRA/GRO"
+    },
     "Gengar": {
       "base_stats": 500,
       "trade_evol": true,
@@ -169,6 +211,10 @@
     },
     "Glaceon": {
       "base_stats": 525,
+      "type": "ICE"
+    },
+    "Glalie": {
+      "base_stats": 480,
       "type": "ICE"
     },
     "Golduck": {
@@ -204,6 +250,10 @@
       "base_stats": 405,
       "type": "GHO/POI"
     },
+    "Haxorus": {
+      "base_stats": 540,
+      "type": "DRA"
+    },
     "Honchkrow": {
       "base_stats": 505,
       "type": "DAR/FLY"
@@ -232,9 +282,25 @@
       "base_stats": 490,
       "type": "NOR"
     },
+    "Kingdra": {
+      "base_stats": 540,
+      "type": "WAT/DRA"
+    },
+    "Klefki": {
+      "base_stats": 470,
+      "type": "STE/FAI"
+    },
     "Klinklang": {
       "base_stats": 520,
       "type": "STE"
+    },
+    "Komala": {
+      "base_stats": 480,
+      "type": "NOR"
+    },
+    "Krookodile": {
+      "base_stats": 519,
+      "type": "GRO/DAR"
     },
     "Lanturn": {
       "base_stats": 460,
@@ -261,6 +327,10 @@
       "has_false_swipe": true,
       "type": "GRA"
     },
+    "Luvdisc": {
+      "base_stats": 330,
+      "type": "WAT"
+    },
     "Luxray": {
       "base_stats": 523,
       "type": "ELE"
@@ -284,12 +354,16 @@
     },
     "Magmortar": {
       "base_stats": 540,
-      "trade_evol": true,
+      "trade_evol_w_item": true,
       "type": "FIR"
     },
     "Magnezone": {
       "base_stats": 535,
       "type": "ELE/STE"
+    },
+    "Mamoswine": {
+      "base_stats": 530,
+      "type": "ICE/GRO"
     },
     "Mandibuzz": {
       "base_stats": 510,
@@ -309,10 +383,20 @@
       "mega_evol": true,
       "type": "PSY"
     },
+    "Mega Garchomp": {
+      "base_stats": 700,
+      "mega_evol": true,
+      "type": "DRA/GRO"
+    },
     "Mega Gengar": {
       "base_stats": 600,
       "mega_evol": true,
       "type": "GHO/POI"
+    },
+    "Mega Glalie": {
+      "base_stats": 580,
+      "mega_evol": true,
+      "type": "ICE"
     },
     "Mega Gyarados": {
       "base_stats": 640,
@@ -323,6 +407,11 @@
       "base_stats": 590,
       "mega_evol": true,
       "type": "NOR"
+    },
+    "Mega Metagross": {
+      "base_stats": 700,
+      "mega_evol": true,
+      "type": "STE/PSY"
     },
     "Mega Pinsir": {
       "base_stats": 600,
@@ -349,6 +438,10 @@
       "base_stats": 525,
       "type": "GRA"
     },
+    "Metagross": {
+      "base_stats": 600,
+      "type": "STE/PSY"
+    },
     "Milotic": {
       "base_stats": 540,
       "type": "WAT"
@@ -356,6 +449,10 @@
     "Miltank": {
       "base_stats": 490,
       "type": "NOR"
+    },
+    "Mimikyu": {
+      "base_stats": 476,
+      "type": "GHO/FAI"
     },
     "Minior": {
       "base_stats": 500,
@@ -392,6 +489,10 @@
     "Palossand": {
       "base_stats": 480,
       "type": "GHO/GRO"
+    },
+    "Pangoro": {
+      "base_stats": 495,
+      "type": "FIG/DAR"
     },
     "Parasect": {
       "base_stats": 405,
@@ -443,9 +544,26 @@
       "base_stats": 495,
       "type": "ROC"
     },
+    "Reuniclus": {
+      "base_stats": 490,
+      "type": "PSY"
+    },
+    "Rhydon": {
+      "base_stats": 485,
+      "type": "GRO/ROC"
+    },
+    "Rhyperior": {
+      "base_stats": 535,
+      "trade_evol_w_item": true,
+      "type": "GRO/ROC"
+    },
     "Ribombee": {
       "base_stats": 464,
       "type": "BUG/FAI"
+    },
+    "Roserade": {
+      "base_stats": 515,
+      "type": "GRA/POI"
     },
     "Sableye": {
       "base_stats": 380,
@@ -463,6 +581,10 @@
       "base_stats": 485,
       "type": "BUG/POI"
     },
+    "Seadra": {
+      "base_stats": 440,
+      "type": "WAT"
+    },
     "Seaking": {
       "base_stats": 450,
       "type": "WAT"
@@ -475,13 +597,17 @@
       "base_stats": 465,
       "type": "STE/FLY"
     },
+    "Slaking": {
+      "base_stats": 670,
+      "type": "NOR"
+    },
     "Slowbro": {
       "base_stats": 490,
       "type": "WAT/PSY"
     },
     "Slowking": {
       "base_stats": 490,
-      "trade_evol": true,
+      "trade_evol_w_item": true,
       "type": "WAT/PSY"
     },
     "Smeargle": {
@@ -495,6 +621,10 @@
     "Spinda": {
       "base_stats": 360,
       "type": "NOR"
+    },
+    "Staraptor": {
+      "base_stats": 485,
+      "type": "NOR/FLY"
     },
     "Starmie": {
       "base_stats": 520,
@@ -528,6 +658,10 @@
       "base_stats": 435,
       "type": "ELE/STE"
     },
+    "Torkoal": {
+      "base_stats": 470,
+      "type": "FIR"
+    },
     "Toucannon": {
       "base_stats": 485,
       "type": "NOR/FLY"
@@ -544,6 +678,10 @@
       "base_stats": 510,
       "type": "GRA"
     },
+    "Turtonator": {
+      "base_stats": 485,
+      "type": "FIR/DRA"
+    },
     "Typhlosion": {
       "base_stats": 534,
       "type": "FIR"
@@ -551,6 +689,10 @@
     "Umbreon": {
       "base_stats": 525,
       "type": "DAR"
+    },
+    "Vanilluxe": {
+      "base_stats": 535,
+      "type": "ICE"
     },
     "Vaporeon": {
       "base_stats": 525,
@@ -572,6 +714,10 @@
       "base_stats": 480,
       "type": "GRA/FAI"
     },
+    "Whiscash": {
+      "base_stats": 468,
+      "type": "WAT/GRO"
+    },
     "Wigglytuff": {
       "base_stats": 435,
       "type": "NOR/FAI"
@@ -583,6 +729,16 @@
     "Wishiwashi (Solo Form)": {
       "base_stats": 175,
       "type": "WAT"
+    },
+    "Zygarde 50% Forme": {
+      "base_stats": 600,
+      "legendary": true,
+      "type": "DRA/GRO"
+    },
+    "Zygarde Complete Forme": {
+      "base_stats": 708,
+      "legendary": true,
+      "type": "DRA/GRO"
     }
   },
   "team": {}

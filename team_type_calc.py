@@ -14,14 +14,15 @@ from datetime import datetime
 
 team_size = 3
 trade_evol = True
+trade_evol_w_item = False
 mega_evol = False
+legendary = False
 has_false_swipe = True
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
 weights = {
     'base_stats_gmean': 1 / 4,
-    # 'strong_score': 14,
     'strong_score': 64,
     'weak_score': 1 / 4,
 }
@@ -150,11 +151,16 @@ def normalize_base_stats(roster):
 def get_pk_list(roster):
     pk_list = []
     for pk, pk_info in roster['all'].items():
-        if trade_evol and 'trade_evol' in pk_info and pk_info['trade_evol']:
+        if 'trade_evol' in pk_info and trade_evol and pk_info['trade_evol']:
             pk_list.append(pk)
-        elif mega_evol and 'mega_evol' in pk_info and pk_info['mega_evol']:
+        elif ('trade_evol_w_item' in pk_info and trade_evol_w_item
+              and pk_info['trade_evol_w_item']):
             pk_list.append(pk)
-        elif 'trade_evol' not in pk_info and 'mega_evol' not in pk_info:
+        elif 'mega_evol' in pk_info and mega_evol and pk_info['mega_evol']:
+            pk_list.append(pk)
+        elif 'legendary' in pk_info and legendary and pk_info['legendary']:
+            pk_list.append(pk)
+        else:
             pk_list.append(pk)
     return pk_list
 
