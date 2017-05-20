@@ -12,7 +12,7 @@ import statistics
 from pprint import pprint
 from datetime import datetime
 
-team_size = 3
+team_size = 4
 trade_evol = True
 trade_evol_w_item = False
 mega_evol = False
@@ -151,15 +151,19 @@ def normalize_base_stats(roster):
 def get_pk_list(roster):
     pk_list = []
     for pk, pk_info in roster['all'].items():
-        if 'trade_evol' in pk_info and trade_evol and pk_info['trade_evol']:
-            pk_list.append(pk)
-        elif ('trade_evol_w_item' in pk_info and trade_evol_w_item
-              and pk_info['trade_evol_w_item']):
-            pk_list.append(pk)
-        elif 'mega_evol' in pk_info and mega_evol and pk_info['mega_evol']:
-            pk_list.append(pk)
-        elif 'legendary' in pk_info and legendary and pk_info['legendary']:
-            pk_list.append(pk)
+        # print(pk, pk_info)
+        if 'trade_evol' in pk_info:
+            if trade_evol and pk_info['trade_evol']:
+                pk_list.append(pk)
+        elif 'trade_evol_w_item' in pk_info:
+            if trade_evol_w_item and pk_info['trade_evol_w_item']:
+                pk_list.append(pk)
+        elif 'mega_evol' in pk_info:
+            if mega_evol and pk_info['mega_evol']:
+                pk_list.append(pk)
+        elif 'legendary' in pk_info:
+            if legendary and pk_info['legendary']:
+                pk_list.append(pk)
         else:
             pk_list.append(pk)
     return pk_list
@@ -396,7 +400,9 @@ def main():
 
     print('team_size:', team_size)
     print('trade_evol:', trade_evol)
+    print('trade_evol_w_item:', trade_evol_w_item)
     print('mega_evol:', mega_evol)
+    print('legendary:', legendary)
     print('has_false_swipe:', has_false_swipe)
     print('teams_size:', teams_size)
     print('worker_count:', worker_count)
