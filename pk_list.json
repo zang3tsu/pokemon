@@ -1,5 +1,10 @@
 {
   "all": {
+    "Absol": {
+      "base_stats": 465,
+      "has_false_swipe": true,
+      "type": "DAR"
+    },
     "Aegislash": {
       "base_stats": 520,
       "has_false_swipe": true,
@@ -252,6 +257,7 @@
     },
     "Haxorus": {
       "base_stats": 540,
+      "has_false_swipe": true,
       "type": "DRA"
     },
     "Honchkrow": {
@@ -378,6 +384,12 @@
       "base_stats": 454,
       "type": "BUG/FLY"
     },
+    "Mega Absol": {
+      "base_stats": 565,
+      "has_false_swipe": true,
+      "mega_evol": true,
+      "type": "DAR"
+    },
     "Mega Alakazam": {
       "base_stats": 600,
       "mega_evol": true,
@@ -492,6 +504,7 @@
     },
     "Pangoro": {
       "base_stats": 495,
+      "has_false_swipe": true,
       "type": "FIG/DAR"
     },
     "Parasect": {
