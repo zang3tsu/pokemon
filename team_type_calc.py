@@ -15,13 +15,13 @@ from datetime import datetime
 team_size = 3
 trade_evol = True
 mega_evol = True
-has_false_swipe = True
+legendary = False
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
 weights = {
     'base_stats_gmean': 1 / 4,
-    # 'strong_score': 14,
     'strong_score': 64,
     'weak_score': 1 / 4,
 }
@@ -129,10 +129,10 @@ def get_strong_against(all_types, all_type_chart, types):
     return numpy.array([t]).T
 
 
-def normalize_base_stats(roster):
+def normalize_base_stats(pk_list):
     # Get max base stat
     base_stats = []
-    for _, pk_ls in roster.items():
+    for _, pk_ls in pk_list.items():
         for pk, inf in pk_ls.items():
             base_stats.append(inf['base_stats'])
 
@@ -140,7 +140,7 @@ def normalize_base_stats(roster):
     stdev = statistics.stdev(base_stats, mean)
 
     # Normalize base stat
-    for _, pk_ls in roster.items():
+    for _, pk_ls in pk_list.items():
         for pk, inf in pk_ls.items():
             z = (inf['base_stats'] - mean) / stdev
             p = 0.5 * (1 + math.erf(z / math.sqrt(2)))
@@ -148,18 +148,31 @@ def normalize_base_stats(roster):
 
 
 def get_pk_list(roster):
-    pk_list = []
+    pk_list = {
+        'all': {},
+        'team': {}
+    }
     for pk, pk_info in roster['all'].items():
-        if trade_evol and 'trade_evol' in pk_info and pk_info['trade_evol']:
-            pk_list.append(pk)
-        elif mega_evol and 'mega_evol' in pk_info and pk_info['mega_evol']:
-            pk_list.append(pk)
-        elif 'trade_evol' not in pk_info and 'mega_evol' not in pk_info:
-            pk_list.append(pk)
+        # print(pk, pk_info)
+        if 'trade_evol' in pk_info:
+            if trade_evol and pk_info['trade_evol']:
+                pk_list['all'][pk] = pk_info
+        elif 'trade_evol_w_item' in pk_info:
+            if trade_evol_w_item and pk_info['trade_evol_w_item']:
+                pk_list['all'][pk] = pk_info
+        elif 'mega_evol' in pk_info:
+            if mega_evol and pk_info['mega_evol']:
+                pk_list['all'][pk] = pk_info
+        elif 'legendary' in pk_info:
+            if legendary and pk_info['legendary']:
+                pk_list['all'][pk] = pk_info
+        else:
+            pk_list['all'][pk] = pk_info
+    pk_list['team'] = roster['team']
     return pk_list
 
 
-def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
+def get_top_team_combinations(pk_list, all_types, all_type_chart):
     # Initialize workers
     print('initializing teams workers...')
     team_q = multiprocessing.Queue(max_queue_size)
@@ -167,7 +180,7 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
     workers = []
     for i in range(worker_count):
         p = multiprocessing.Process(target=teams_worker,
-                                    args=(roster, all_types, all_type_chart,
+                                    args=(pk_list, all_types, all_type_chart,
                                           team_q, teams_q))
         p.start()
         workers.append(p)
@@ -182,10 +195,10 @@ def get_top_team_combinations(pk_list, roster, all_types, all_type_chart):
     # Add combinations to queue
     print('adding combinations to queue...')
     counter = 0
-    for comb in itertools.combinations(pk_list,
-                                       team_size - len(roster['team'])):
+    for comb in itertools.combinations(pk_list['all'].keys(),
+                                       team_size - len(pk_list['team'])):
         # Get team
-        team = tuple(sorted(comb + tuple(roster['team'].keys())))
+        team = tuple(sorted(comb + tuple(pk_list['team'].keys())))
         # Add to queue
         team_q.put(team)
         counter += 1
@@ -221,14 +234,14 @@ def results_worker(teams_q):
     pprint(teams, width=120)
 
 
-def teams_worker(roster, all_types, all_type_chart, team_q, teams_q):
+def teams_worker(pk_list, all_types, all_type_chart, team_q, teams_q):
     team = team_q.get()
     while team != 'stop':
         # Check if team has false swipe
-        if ((has_false_swipe and check_if_has_false_swipe(roster, team))
+        if ((has_false_swipe and check_if_has_false_swipe(pk_list, team))
                 or not has_false_swipe):
             # Get team score
-            score = get_team_score(team, roster, all_types, all_type_chart)
+            score = get_team_score(team, pk_list, all_types, all_type_chart)
             # Add result to teams queue
             teams_q.put(score + (team,))
         team = team_q.get()
@@ -236,15 +249,15 @@ def teams_worker(roster, all_types, all_type_chart, team_q, teams_q):
     teams_q.put('done')
 
 
-def check_if_has_false_swipe(roster, team):
+def check_if_has_false_swipe(pk_list, team):
     for pk in team:
-        if pk in roster['team']:
-            if ('has_false_swipe' in roster['team'][pk]
-                    and roster['team'][pk]['has_false_swipe']):
+        if pk in pk_list['team']:
+            if ('has_false_swipe' in pk_list['team'][pk]
+                    and pk_list['team'][pk]['has_false_swipe']):
                 return True
-        elif pk in roster['all']:
-            if ('has_false_swipe' in roster['all'][pk]
-                    and roster['all'][pk]['has_false_swipe']):
+        elif pk in pk_list['all']:
+            if ('has_false_swipe' in pk_list['all'][pk]
+                    and pk_list['all'][pk]['has_false_swipe']):
                 return True
         else:
             print(pk, 'not in either team/all list! Exiting.')
@@ -253,17 +266,17 @@ def check_if_has_false_swipe(roster, team):
     return False
 
 
-def get_team_score(team, roster, all_types, all_type_chart):
+def get_team_score(team, pk_list, all_types, all_type_chart):
 
     # Get normalized base stats geometric mean
-    base_stats_gmean = get_base_stats_gmean(team, roster)
+    base_stats_gmean = get_base_stats_gmean(team, pk_list)
 
     # Get weak against score
-    weak_score = get_weak_against_score(team, roster,
+    weak_score = get_weak_against_score(team, pk_list,
                                         all_types, all_type_chart)
 
     # Get strong against score
-    strong_score = get_strong_against_score(team, roster,
+    strong_score = get_strong_against_score(team, pk_list,
                                             all_types, all_type_chart)
 
     # Get geometric mean of all scores
@@ -276,7 +289,7 @@ def get_team_score(team, roster, all_types, all_type_chart):
                                1 / weights['sum'])
                       / 100)
     score = team_score, base_stats_gmean, strong_score, weak_score
-    if 99 < strong_score <= 100:
+    if strong_score == 100:
         print(score + (team,))
     return score
 
@@ -285,13 +298,13 @@ def pcnt(x):
     return float('%.2f' % (x * 100))
 
 
-def get_base_stats_gmean(team, roster):
+def get_base_stats_gmean(team, pk_list):
     prod = 1
     for pk in team:
-        if pk in roster['team']:
-            prod *= roster['team'][pk]['norm_base_stats']
-        elif pk in roster['all']:
-            prod *= roster['all'][pk]['norm_base_stats']
+        if pk in pk_list['team']:
+            prod *= pk_list['team'][pk]['norm_base_stats']
+        elif pk in pk_list['all']:
+            prod *= pk_list['all'][pk]['norm_base_stats']
         else:
             print(pk, 'not in either team/all list! Exiting.')
             exit(1)
@@ -303,23 +316,23 @@ def get_base_stats_gmean(team, roster):
     return pcnt(base_stats_gmean)
 
 
-def get_types(roster, pk):
+def get_types(pk_list, pk):
     types = None
-    if pk in roster['team']:
-        types = tuple(sorted(roster['team'][pk]['type'].split('/')))
-    elif pk in roster['all']:
-        types = tuple(sorted(roster['all'][pk]['type'].split('/')))
+    if pk in pk_list['team']:
+        types = tuple(sorted(pk_list['team'][pk]['type'].split('/')))
+    elif pk in pk_list['all']:
+        types = tuple(sorted(pk_list['all'][pk]['type'].split('/')))
     else:
         print(pk, 'not in either team/all list! Exiting.')
         exit(1)
     return types
 
 
-def get_weak_against_score(team, roster, all_types, all_type_chart):
+def get_weak_against_score(team, pk_list, all_types, all_type_chart):
     # Get weaknesses
     weak_combo = None
     for pk in team:
-        types = get_types(roster, pk)
+        types = get_types(pk_list, pk)
         if weak_combo is None:
             weak_combo = [all_type_chart[all_types.index(types)]]
         else:
@@ -334,20 +347,14 @@ def get_weak_against_score(team, roster, all_types, all_type_chart):
     return pcnt(weak_score)
 
 
-def get_strong_against_score(team, roster, all_types, all_type_chart):
+def get_strong_against_score(team, pk_list, all_types, all_type_chart):
     # Get strengths
     types_team = []
     for pk in team:
-        types = get_types(roster, pk)
+        types = get_types(pk_list, pk)
         types_team.append(types)
     strong_score = get_strong_score(types_team, all_types, all_type_chart)
-    # if .99 < strong_score <= 1.:
-    #     print('team:', team)
-    #     print('types_team:', types_team)
-    #     print('strong_combo:\n', strong_combo)
-    #     print('counter:', counter)
-    #     print('all_types:', len(all_types))
-    #     exit(1)
+
     return strong_score
 
 
@@ -390,7 +397,9 @@ def main():
 
     print('team_size:', team_size)
     print('trade_evol:', trade_evol)
+    print('trade_evol_w_item:', trade_evol_w_item)
     print('mega_evol:', mega_evol)
+    print('legendary:', legendary)
     print('has_false_swipe:', has_false_swipe)
     print('teams_size:', teams_size)
     print('worker_count:', worker_count)
@@ -405,20 +414,22 @@ def main():
     print('reading pokemon roster...')
     roster = json.load(open('pk_list.json', 'r'))
 
-    # Normalize base stats
-    print('normalizing base stats...')
-    normalize_base_stats(roster)
-    print('roster size:', len(roster['all']))
-
     # Get pokemon list
     print('getting pokemon list...')
     pk_list = get_pk_list(roster)
-    print('pk_list size:', len(pk_list))
+    print('pk_list all size:', len(pk_list['all']))
+    print('pk_list team size:', len(pk_list['team']))
+    # pprint(pk_list, width=200)
+    # exit(1)
+
+    # Normalize base stats
+    print('normalizing base stats...')
+    normalize_base_stats(pk_list)
 
     # Get all team combinations
     print('getting top team combinations...')
     start_time = datetime.now()
-    get_top_team_combinations(pk_list, roster, all_types, all_type_chart)
+    get_top_team_combinations(pk_list, all_types, all_type_chart)
     print('duration:', datetime.now() - start_time)
 
 
