@@ -115,6 +115,7 @@
     },
     "Buzzwole": {
       "base_stats": 570,
+      "mythical": true,
       "type": "BUG/FIG"
     },
     "Carbink": {
@@ -131,6 +132,7 @@
     },
     "Celesteela": {
       "base_stats": 570,
+      "mythical": true,
       "type": "STE/FLY"
     },
     "Chandelure": {
@@ -293,6 +295,7 @@
     },
     "Guzzlord": {
       "base_stats": 570,
+      "mythical": true,
       "type": "DAR/DRA"
     },
     "Gyarados": {
@@ -342,6 +345,7 @@
     },
     "Kartana": {
       "base_stats": 570,
+      "mythical": true,
       "type": "GRA/STE"
     },
     "Kingdra": {
@@ -587,6 +591,7 @@
     },
     "Nihilego": {
       "base_stats": 570,
+      "mythical": true,
       "type": "ROC/POI"
     },
     "Oranguru": {
@@ -633,6 +638,7 @@
     },
     "Pheromosa": {
       "base_stats": 570,
+      "mythical": true,
       "type": "BUG/FIG"
     },
     "Pikachu": {
@@ -748,74 +754,92 @@
     },
     "Silvally (BUG)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "BUG"
     },
     "Silvally (DAR)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "DAR"
     },
     "Silvally (DRA)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "DRA"
     },
     "Silvally (ELE)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "ELE"
     },
     "Silvally (FAI)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "FAI"
     },
     "Silvally (FIG)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "FIG"
     },
     "Silvally (FIR)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "FIR"
     },
     "Silvally (FLY)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "FLY"
     },
     "Silvally (GHO)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "GHO"
     },
     "Silvally (GRA)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "GRA"
     },
     "Silvally (GRO)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "GRO"
     },
     "Silvally (ICE)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "ICE"
     },
     "Silvally (NOR)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "NOR"
     },
     "Silvally (POI)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "POI"
     },
     "Silvally (PSY)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "PSY"
     },
     "Silvally (ROC)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "ROC"
     },
     "Silvally (STE)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "STE"
     },
     "Silvally (WAT)": {
       "base_stats": 570,
+      "mythical": true,
       "type": "WAT"
     },
     "Skarmory": {
@@ -878,18 +902,22 @@
     },
     "Tapu Bulu": {
       "base_stats": 570,
+      "mythical": true,
       "type": "GRA/FAI"
     },
     "Tapu Fini": {
       "base_stats": 570,
+      "mythical": true,
       "type": "WAT/FAI"
     },
     "Tapu Koko": {
       "base_stats": 570,
+      "mythical": true,
       "type": "ELE/FAI"
     },
     "Tapu Lele": {
       "base_stats": 570,
+      "mythical": true,
       "type": "PSY/FAI"
     },
     "Tauros": {
@@ -990,6 +1018,7 @@
     },
     "Xurkitree": {
       "base_stats": 570,
+      "mythical": true,
       "type": "ELE"
     },
     "Zygarde 50% Forme": {

@@ -16,6 +16,7 @@ team_size = 4
 trade_evol = True
 trade_evol_w_item = True
 mega_evol = False
+mythical = False
 legendary = False
 has_false_swipe = False
 teams_size = 20
@@ -168,6 +169,9 @@ def get_pk_list(roster):
                 pk_list['all'][pk] = pk_info
         elif 'mega_evol' in pk_info:
             if mega_evol and pk_info['mega_evol']:
+                pk_list['all'][pk] = pk_info
+        elif 'mythical' in pk_info:
+            if mythical and pk_info['mythical']:
                 pk_list['all'][pk] = pk_info
         elif 'legendary' in pk_info:
             if legendary and pk_info['legendary']:
