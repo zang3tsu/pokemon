@@ -2,6 +2,7 @@
   "all": {
     "Absol": {
       "base_stats": 465,
+      "has_false_swipe": true,
       "type": "DAR"
     },
     "Aegislash": {
@@ -308,6 +309,7 @@
     },
     "Haxorus": {
       "base_stats": 540,
+      "has_false_swipe": true,
       "type": "DRA"
     },
     "Honchkrow": {
@@ -613,6 +615,7 @@
     },
     "Pangoro": {
       "base_stats": 495,
+      "has_false_swipe": true,
       "type": "FIG/DAR"
     },
     "Parasect": {
