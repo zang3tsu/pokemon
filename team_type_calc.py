@@ -245,7 +245,8 @@ def teams_worker(pk_list, all_types, all_type_chart, team_q, teams_q):
     while team != 'stop':
         # Check if team has false swipe
         if ((has_false_swipe and check_if_has_false_swipe(pk_list, team))
-                or not has_false_swipe):
+                or not has_false_swipe
+                and check_if_only_one_instance('Silvally', team)):
             # Get team score
             score = get_team_score(team, pk_list, all_types, all_type_chart)
             # Add result to teams queue
@@ -270,6 +271,18 @@ def check_if_has_false_swipe(pk_list, team):
             exit(1)
     # No false swipe in team
     return False
+
+
+def check_if_only_one_instance(pk, team):
+    counter = 0
+    for p in team:
+        if pk in p:
+            counter += 1
+            if counter >= 2:
+                # >1 instance of pokemon
+                return False
+    # exactly 1 instance of pokemon
+    return True
 
 
 def get_team_score(team, pk_list, all_types, all_type_chart):
