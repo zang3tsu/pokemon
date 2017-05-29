@@ -422,6 +422,7 @@ def main():
     print('trade_evol:', trade_evol)
     print('trade_evol_w_item:', trade_evol_w_item)
     print('mega_evol:', mega_evol)
+    print('mythical:', mythical)
     print('legendary:', legendary)
     print('has_false_swipe:', has_false_swipe)
     print('teams_size:', teams_size)
