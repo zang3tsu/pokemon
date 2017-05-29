@@ -10,6 +10,10 @@
       "has_false_swipe": true,
       "type": "STE/GHO"
     },
+    "Aerodactyl": {
+      "base_stats": 515,
+      "type": "ROC/FLY"
+    },
     "Alakazam": {
       "base_stats": 500,
       "trade_evol": true,
@@ -18,6 +22,10 @@
     "Alolan Dugtrio": {
       "base_stats": 425,
       "type": "GRO/STE"
+    },
+    "Alolan Exeggutor": {
+      "base_stats": 530,
+      "type": "GRA/DRA"
     },
     "Alolan Golem": {
       "base_stats": 495,
@@ -105,6 +113,11 @@
       "base_stats": 395,
       "type": "BUG/FLY"
     },
+    "Buzzwole": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "BUG/FIG"
+    },
     "Carbink": {
       "base_stats": 500,
       "type": "ROC/FAI"
@@ -116,6 +129,11 @@
     "Castform": {
       "base_stats": 420,
       "type": "NOR"
+    },
+    "Celesteela": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "STE/FLY"
     },
     "Chandelure": {
       "base_stats": 520,
@@ -132,6 +150,10 @@
     "Comfey": {
       "base_stats": 485,
       "type": "FAI"
+    },
+    "Conkeldurr": {
+      "base_stats": 505,
+      "type": "FIG"
     },
     "Corsola": {
       "base_stats": 410,
@@ -154,13 +176,25 @@
       "base_stats": 330,
       "type": "ICE/FLY"
     },
+    "Dhelmise": {
+      "base_stats": 517,
+      "type": "GHO/GRA"
+    },
     "Dragonite": {
       "base_stats": 600,
       "type": "DRA/FLY"
     },
+    "Drampa": {
+      "base_stats": 485,
+      "type": "NOR/DRA"
+    },
     "Drifblim": {
       "base_stats": 498,
       "type": "GHO/FLY"
+    },
+    "Eelektross": {
+      "base_stats": 515,
+      "type": "ELE"
     },
     "Electabuzz": {
       "base_stats": 490,
@@ -170,6 +204,14 @@
       "base_stats": 540,
       "trade_evol_w_item": true,
       "type": "ELE"
+    },
+    "Emboar": {
+      "base_stats": 528,
+      "type": "FIR/FIG"
+    },
+    "Emolga": {
+      "base_stats": 428,
+      "type": "ELE/FLY"
     },
     "Espeon": {
       "base_stats": 525,
@@ -203,6 +245,10 @@
     "Garchomp": {
       "base_stats": 600,
       "type": "DRA/GRO"
+    },
+    "Gastrodon": {
+      "base_stats": 475,
+      "type": "WAT/GRO"
     },
     "Gengar": {
       "base_stats": 500,
@@ -239,9 +285,18 @@
       "base_stats": 490,
       "type": "PSY"
     },
+    "Granbull": {
+      "base_stats": 450,
+      "type": "FAI"
+    },
     "Gumshoos": {
       "base_stats": 418,
       "type": "NOR"
+    },
+    "Guzzlord": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "DAR/DRA"
     },
     "Gyarados": {
       "base_stats": 540,
@@ -288,6 +343,11 @@
       "base_stats": 490,
       "type": "NOR"
     },
+    "Kartana": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "GRA/STE"
+    },
     "Kingdra": {
       "base_stats": 540,
       "type": "WAT/DRA"
@@ -304,6 +364,10 @@
       "base_stats": 480,
       "type": "NOR"
     },
+    "Kommo-o": {
+      "base_stats": 600,
+      "type": "DRA/FIG"
+    },
     "Krookodile": {
       "base_stats": 519,
       "type": "GRO/DAR"
@@ -312,9 +376,17 @@
       "base_stats": 460,
       "type": "WAT/ELE"
     },
+    "Lapras": {
+      "base_stats": 535,
+      "type": "WAT/ICE"
+    },
     "Leafeon": {
       "base_stats": 525,
       "type": "GRA"
+    },
+    "Leavanny": {
+      "base_stats": 500,
+      "type": "BUG/GRA"
     },
     "Ledian": {
       "base_stats": 390,
@@ -324,9 +396,18 @@
       "base_stats": 480,
       "type": "GRA"
     },
+    "Lucario": {
+      "base_stats": 525,
+      "type": "FIG/STE"
+    },
     "Lumineon": {
       "base_stats": 460,
       "type": "WAT"
+    },
+    "Lunala": {
+      "base_stats": 680,
+      "legendary": true,
+      "type": "PSY/GHO"
     },
     "Lurantis": {
       "base_stats": 480,
@@ -353,6 +434,11 @@
     "Machoke": {
       "base_stats": 405,
       "type": "FIG"
+    },
+    "Magearna": {
+      "base_stats": 600,
+      "legendary": true,
+      "type": "STE/FAI"
     },
     "Magmar": {
       "base_stats": 495,
@@ -386,9 +472,13 @@
     },
     "Mega Absol": {
       "base_stats": 565,
-      "has_false_swipe": true,
       "mega_evol": true,
       "type": "DAR"
+    },
+    "Mega Aerodactyl": {
+      "base_stats": 615,
+      "mega_evol": true,
+      "type": "ROC/FLY"
     },
     "Mega Alakazam": {
       "base_stats": 600,
@@ -420,6 +510,11 @@
       "mega_evol": true,
       "type": "NOR"
     },
+    "Mega Lucario": {
+      "base_stats": 625,
+      "mega_evol": true,
+      "type": "FIG/STE"
+    },
     "Mega Metagross": {
       "base_stats": 700,
       "mega_evol": true,
@@ -441,6 +536,16 @@
       "mega_evol": true,
       "type": "DRA/FLY"
     },
+    "Mega Scizor": {
+      "base_stats": 600,
+      "mega_evol": true,
+      "type": "BUG/STE"
+    },
+    "Mega Sharpedo": {
+      "base_stats": 560,
+      "mega_evol": true,
+      "type": "WAT/DAR"
+    },
     "Mega Slowbro": {
       "base_stats": 590,
       "mega_evol": true,
@@ -456,6 +561,7 @@
     },
     "Milotic": {
       "base_stats": 540,
+      "trade_evol_w_item": true,
       "type": "WAT"
     },
     "Miltank": {
@@ -477,6 +583,16 @@
     "Mudsdale": {
       "base_stats": 500,
       "type": "GRO"
+    },
+    "Necrozma": {
+      "base_stats": 600,
+      "legendary": true,
+      "type": "PSY"
+    },
+    "Nihilego": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "ROC/POI"
     },
     "Oranguru": {
       "base_stats": 490,
@@ -520,6 +636,11 @@
       "base_stats": 440,
       "type": "WAT/FLY"
     },
+    "Pheromosa": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "BUG/FIG"
+    },
     "Pikachu": {
       "base_stats": 320,
       "type": "ELE"
@@ -531,11 +652,16 @@
     },
     "Politoed": {
       "base_stats": 500,
+      "trade_evol_w_item": true,
       "type": "WAT"
     },
     "Poliwrath": {
       "base_stats": 510,
       "type": "WAT/FIG"
+    },
+    "Porygon-Z": {
+      "base_stats": 535,
+      "type": "NOR"
     },
     "Primarina": {
       "base_stats": 530,
@@ -556,6 +682,10 @@
     "Rampardos": {
       "base_stats": 495,
       "type": "ROC"
+    },
+    "Relicanth": {
+      "base_stats": 485,
+      "type": "WAT/ROC"
     },
     "Reuniclus": {
       "base_stats": 490,
@@ -590,6 +720,14 @@
       "base_stats": 480,
       "type": "POI/FIR"
     },
+    "Samurott": {
+      "base_stats": 528,
+      "type": "WAT"
+    },
+    "Scizor": {
+      "base_stats": 500,
+      "type": "BUG/STE"
+    },
     "Scolipede": {
       "base_stats": 485,
       "type": "BUG/POI"
@@ -602,9 +740,107 @@
       "base_stats": 450,
       "type": "WAT"
     },
+    "Serperior": {
+      "base_stats": 528,
+      "type": "GRA"
+    },
+    "Sharpedo": {
+      "base_stats": 460,
+      "type": "WAT/DAR"
+    },
     "Shiinotic": {
       "base_stats": 405,
       "type": "GRA/FAI"
+    },
+    "Silvally (BUG)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "BUG"
+    },
+    "Silvally (DAR)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "DAR"
+    },
+    "Silvally (DRA)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "DRA"
+    },
+    "Silvally (ELE)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "ELE"
+    },
+    "Silvally (FAI)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "FAI"
+    },
+    "Silvally (FIG)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "FIG"
+    },
+    "Silvally (FIR)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "FIR"
+    },
+    "Silvally (FLY)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "FLY"
+    },
+    "Silvally (GHO)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "GHO"
+    },
+    "Silvally (GRA)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "GRA"
+    },
+    "Silvally (GRO)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "GRO"
+    },
+    "Silvally (ICE)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "ICE"
+    },
+    "Silvally (NOR)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "NOR"
+    },
+    "Silvally (POI)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "POI"
+    },
+    "Silvally (PSY)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "PSY"
+    },
+    "Silvally (ROC)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "ROC"
+    },
+    "Silvally (STE)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "STE"
+    },
+    "Silvally (WAT)": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "WAT"
     },
     "Skarmory": {
       "base_stats": 465,
@@ -630,6 +866,11 @@
     "Snorlax": {
       "base_stats": 540,
       "type": "NOR"
+    },
+    "Solgaleo": {
+      "base_stats": 680,
+      "legendary": true,
+      "type": "PSY/STE"
     },
     "Spinda": {
       "base_stats": 360,
@@ -659,6 +900,26 @@
       "base_stats": 499,
       "type": "FIR/FLY"
     },
+    "Tapu Bulu": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "GRA/FAI"
+    },
+    "Tapu Fini": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "WAT/FAI"
+    },
+    "Tapu Koko": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "ELE/FAI"
+    },
+    "Tapu Lele": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "PSY/FAI"
+    },
     "Tauros": {
       "base_stats": 490,
       "type": "NOR"
@@ -670,6 +931,10 @@
     "Togedemaru": {
       "base_stats": 435,
       "type": "ELE/STE"
+    },
+    "Togekiss": {
+      "base_stats": 545,
+      "type": "FAI/FLY"
     },
     "Torkoal": {
       "base_stats": 470,
@@ -719,9 +984,17 @@
       "base_stats": 500,
       "type": "BUG/ELE"
     },
+    "Wailord": {
+      "base_stats": 500,
+      "type": "WAT"
+    },
     "Walrein": {
       "base_stats": 530,
       "type": "ICE/WAT"
+    },
+    "Weavile": {
+      "base_stats": 510,
+      "type": "DAR/ICE"
     },
     "Whimsicott": {
       "base_stats": 480,
@@ -742,6 +1015,11 @@
     "Wishiwashi (Solo Form)": {
       "base_stats": 175,
       "type": "WAT"
+    },
+    "Xurkitree": {
+      "base_stats": 570,
+      "mythical": true,
+      "type": "ELE"
     },
     "Zygarde 50% Forme": {
       "base_stats": 600,

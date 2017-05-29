@@ -12,19 +12,25 @@ import statistics
 from pprint import pprint
 from datetime import datetime
 
-team_size = 3
+team_size = 4
 trade_evol = True
-trade_evol_w_item = False
+trade_evol_w_item = True
 mega_evol = False
+mythical = False
 legendary = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
+# weights = {
+#     'base_stats_gmean': 1 / 4,
+#     'strong_score': 64,
+#     'weak_score': 1 / 4,
+# }
 weights = {
-    'base_stats_gmean': 1 / 4,
-    'strong_score': 64,
-    'weak_score': 1 / 4,
+    'base_stats_gmean': 1,
+    'strong_score': 1,
+    'weak_score': 1,
 }
 weights['sum'] = sum([v for v in weights.values()])
 
@@ -164,6 +170,9 @@ def get_pk_list(roster):
         elif 'mega_evol' in pk_info:
             if mega_evol and pk_info['mega_evol']:
                 pk_list['all'][pk] = pk_info
+        elif 'mythical' in pk_info:
+            if mythical and pk_info['mythical']:
+                pk_list['all'][pk] = pk_info
         elif 'legendary' in pk_info:
             if legendary and pk_info['legendary']:
                 pk_list['all'][pk] = pk_info
@@ -240,7 +249,8 @@ def teams_worker(pk_list, all_types, all_type_chart, team_q, teams_q):
     while team != 'stop':
         # Check if team has false swipe
         if ((has_false_swipe and check_if_has_false_swipe(pk_list, team))
-                or not has_false_swipe):
+                or not has_false_swipe
+                and check_if_only_one_instance('Silvally', team)):
             # Get team score
             score = get_team_score(team, pk_list, all_types, all_type_chart)
             # Add result to teams queue
@@ -265,6 +275,18 @@ def check_if_has_false_swipe(pk_list, team):
             exit(1)
     # No false swipe in team
     return False
+
+
+def check_if_only_one_instance(pk, team):
+    counter = 0
+    for p in team:
+        if pk in p:
+            counter += 1
+            if counter >= 2:
+                # >1 instance of pokemon
+                return False
+    # exactly 1 instance of pokemon
+    return True
 
 
 def get_team_score(team, pk_list, all_types, all_type_chart):
@@ -401,6 +423,7 @@ def main():
     print('trade_evol:', trade_evol)
     print('trade_evol_w_item:', trade_evol_w_item)
     print('mega_evol:', mega_evol)
+    print('mythical:', mythical)
     print('legendary:', legendary)
     print('has_false_swipe:', has_false_swipe)
     print('teams_size:', teams_size)
