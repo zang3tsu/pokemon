@@ -12,19 +12,24 @@ import statistics
 from pprint import pprint
 from datetime import datetime
 
-team_size = 3
+team_size = 4
 trade_evol = True
-trade_evol_w_item = False
+trade_evol_w_item = True
 mega_evol = False
 legendary = False
-has_false_swipe = True
+has_false_swipe = False
 teams_size = 20
 worker_count = multiprocessing.cpu_count() - 1
 max_queue_size = (worker_count + 1) // 4 * 8000000
+# weights = {
+#     'base_stats_gmean': 1 / 4,
+#     'strong_score': 64,
+#     'weak_score': 1 / 4,
+# }
 weights = {
-    'base_stats_gmean': 1 / 4,
-    'strong_score': 64,
-    'weak_score': 1 / 4,
+    'base_stats_gmean': 1,
+    'strong_score': 1,
+    'weak_score': 1,
 }
 weights['sum'] = sum([v for v in weights.values()])
 
