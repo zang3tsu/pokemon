@@ -375,6 +375,7 @@ def get_strong_score(types_team, all_types, all_type_chart,
     else:
         counter = numpy.count_nonzero(numpy.any(strong_combo >= 1, axis=0))
     strong_score = counter / len(all_types)
+    # Get resist
     return pcnt(strong_score)
 
 
