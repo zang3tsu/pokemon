@@ -15,8 +15,8 @@ from datetime import datetime
 team_size = 4
 trade_evol = True
 trade_evol_w_item = True
-mega_evol = False
-mythical = False
+mega_evol = True
+mythical = True
 legendary = False
 has_false_swipe = False
 teams_size = 20
@@ -250,7 +250,8 @@ def teams_worker(pk_list, all_types, all_type_chart, team_q, teams_q):
         # Check if team has false swipe
         if ((has_false_swipe and check_if_has_false_swipe(pk_list, team))
                 or not has_false_swipe
-                and check_if_only_one_instance('Silvally', team)):
+                and check_if_only_one_instance('Silvally', team)
+                and check_if_only_one_mega(team, pk_list)):
             # Get team score
             score = get_team_score(team, pk_list, all_types, all_type_chart)
             # Add result to teams queue
@@ -285,6 +286,24 @@ def check_if_only_one_instance(pk, team):
             if counter >= 2:
                 # >1 instance of pokemon
                 return False
+    # exactly 1 instance of pokemon
+    return True
+
+
+def check_if_only_one_mega(team, pk_list):
+    counter = 0
+    for pk in team:
+        if pk in pk_list['team']:
+            if ('mega_evol' in pk_list['team'][pk]
+                    and pk_list['team'][pk]['mega_evol']):
+                counter += 1
+        elif pk in pk_list['all']:
+            if ('mega_evol' in pk_list['all'][pk]
+                    and pk_list['all'][pk]['mega_evol']):
+                counter += 1
+        if counter >= 2:
+            # >1 instance of mega evolution
+            return False
     # exactly 1 instance of pokemon
     return True
 
