@@ -17,17 +17,17 @@ slots = 3
 # mt = ['BUG', 'GRA', 'FAI']
 
 # Silvally (GRO)
-# smt = ['GRO']
-# mt = ['ICE', 'ELE', 'FIR', 'WAT', 'STE', 'BUG', 'DAR',
-#       'NOR', 'DRA', 'GHO', 'BUG', 'FLY', 'ROC', 'POI']
+smt = ['GRO']
+mt = ['ICE', 'ELE', 'FIR', 'WAT', 'STE', 'BUG', 'DAR',
+      'NOR', 'DRA', 'GHO', 'BUG', 'FLY', 'ROC', 'POI']
 
 # Kingdra
 # smt = ['DRA', 'WAT']
 # mt = ['NOR', 'ICE', 'STE', 'BUG', 'POI']
 
 # Mega Aerodactyl
-smt = ['ROC', 'FLY']
-mt = ['NOR', 'GRO', 'STE', 'DAR', 'DRA', 'ICE', 'FIR', 'ELE']
+# smt = ['ROC', 'FLY']
+# mt = ['NOR', 'GRO', 'STE', 'DAR', 'DRA', 'ICE', 'FIR', 'ELE']
 
 # Mega Lucario
 # smt = ['FIG', 'STE']
@@ -37,6 +37,14 @@ mt = ['NOR', 'GRO', 'STE', 'DAR', 'DRA', 'ICE', 'FIR', 'ELE']
 # smt = ['GHO']
 # mt = ['ICE', 'ELE', 'FIR', 'WAT', 'STE', 'BUG', 'DAR',
 #       'NOR', 'DRA', 'BUG', 'FLY', 'ROC', 'POI']
+
+# Mega Absol
+# smt = ['DAR']
+# mt = ['NOR', 'BUG', 'FAI', 'PSY', 'ROC', 'DAR', 'GHO', 'FLY']
+
+# Tapu Koko
+# smt = ['ELE', 'FAI']
+# mt = ['NOR', 'STE', 'BUG', 'FLY', 'DAR']
 
 
 def main():
